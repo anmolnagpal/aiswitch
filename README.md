@@ -118,7 +118,71 @@ aiswitch current
 | `aiswitch list` | List all profiles in a table |
 | `aiswitch remove <profile>` | Delete a profile |
 | `aiswitch current` | Show the active profile and live system state |
-| `aiswitch shell-init` | Print shell integration code |
+| `aiswitch shell-init` | Print shell integration code (wrapper + cd hook) |
+| `aiswitch init` | Create a `.aiswitch` file in the current project directory |
+| `aiswitch detect` | Find and apply the nearest `.aiswitch` file (called by the cd hook) |
+
+---
+
+## Per-project profiles with `.aiswitch`
+
+Similar to `.terraform-version` for tfswitch or `.nvmrc` for nvm, you can pin
+each project to a specific AI profile by committing a `.aiswitch` file to its root.
+
+### Create one
+
+```bash
+cd ~/my-work-project
+aiswitch init     # interactive — pick profile + optional overrides
+```
+
+This writes a `.aiswitch` file (no secrets, safe to commit):
+
+```yaml
+# aiswitch project config — safe to commit, contains no secrets
+profile: work
+
+claude:
+  model: claude-opus-4-5   # optional — overrides the profile default
+
+github:
+  email: me@company.com    # optional — overrides git commit email
+```
+
+Or the minimal plain-text form:
+
+```
+work
+```
+
+### Auto-switch on `cd`
+
+With shell integration active (`eval "$(aiswitch shell-init)"`), the profile
+switches automatically the moment you enter the directory — no manual step needed:
+
+```
+~/personal-project  $ echo $ANTHROPIC_API_KEY
+sk-ant-personal-...
+
+~/personal-project  $ cd ~/work-project
+⬡ aiswitch → work
+
+~/work-project      $ echo $ANTHROPIC_API_KEY
+sk-ant-work-...
+```
+
+The hook:
+- fires on every `cd` (zsh `chpwd`, bash `PROMPT_COMMAND`, fish `--on-variable PWD`, PowerShell `Set-Location`)
+- is silent when the directory has no `.aiswitch` file
+- shows a one-line indicator when it switches
+- skips re-applying if you're already on the right profile
+
+### Apply manually
+
+```bash
+aiswitch detect          # verbose — shows what it switched and why
+aiswitch detect --quiet  # one-line indicator only (same as the hook)
+```
 
 ---
 

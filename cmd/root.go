@@ -62,6 +62,8 @@ func init() {
 	rootCmd.AddCommand(currentCmd)
 	rootCmd.AddCommand(shellInitCmd)
 	rootCmd.AddCommand(useCmd)
+	rootCmd.AddCommand(localInitCmd)
+	rootCmd.AddCommand(detectCmd)
 }
 
 // applyProfile applies all providers for the named profile.
