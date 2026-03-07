@@ -1,17 +1,41 @@
-# Compiled binaries
+# ── Compiled binaries ─────────────────────────────────────────────────────────
+# Local build output directories
 bin/
 dist/
 
-# Go test cache
-*.test
-*.out
+# Root-level binary produced by `go build .`
+/aiswitch
+/aiswitch.exe
 
-# Editor / OS
-.DS_Store
-.idea/
-.vscode/
-*.swp
-*.swo
+# Any cross-compiled output patterns (e.g. aiswitch-darwin-arm64)
+/aiswitch-*
+
+# Windows executables anywhere in the tree
+*.exe
 
 # GoReleaser artifacts
-/dist
+/dist/
+
+# ── Go toolchain ───────────────────────────────────────────────────────────────
+*.test
+*.out
+vendor/
+
+# ── OS & editor artefacts ─────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+.idea/
+*.iml
+.vscode/
+*.code-workspace
+
+*.swp
+*.swo
+*~
+
+# ── Environment / secrets (never commit these) ────────────────────────────────
+.env
+.env.*
+*.pem
+*.key
