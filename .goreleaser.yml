@@ -1,0 +1,113 @@
+version: 2
+
+project_name: aiswitch
+
+before:
+  hooks:
+    - go mod tidy
+    - go mod verify
+
+builds:
+  - id: aiswitch
+    main: .
+    binary: aiswitch
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    # 32-bit Windows is still common enough to include.
+    goarm:
+      - "7"
+    ignore:
+      - goos: windows
+        goarch: arm64
+    ldflags:
+      - -s -w
+      - -X main.version={{.Version}}
+      - -X main.commit={{.Commit}}
+      - -X main.date={{.Date}}
+
+archives:
+  - id: aiswitch
+    builds: [aiswitch]
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- .Version }}_
+      {{- .Os }}_
+      {{- .Arch }}
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - README.md
+      - LICENSE
+
+checksum:
+  name_template: "checksums.txt"
+  algorithm: sha256
+
+changelog:
+  use: github
+  sort: asc
+  groups:
+    - title: "Features"
+      regexp: "^.*feat[(\\[].*[)\\]]?:.*$"
+      order: 0
+    - title: "Bug fixes"
+      regexp: "^.*fix[(\\[].*[)\\]]?:.*$"
+      order: 1
+    - title: "Dependencies"
+      regexp: "^.*deps[(\\[].*[)\\]]?:.*$"
+      order: 2
+    - title: "Other"
+      order: 999
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "Merge pull request"
+      - "Merge branch"
+
+release:
+  github:
+    owner: anmolnagpal
+    name: aiswitch
+  name_template: "v{{.Version}}"
+  draft: false
+  prerelease: auto
+  footer: |
+    ## Installation
+
+    ### macOS / Linux (bash/zsh)
+    ```bash
+    # Apple Silicon
+    curl -L https://github.com/anmolnagpal/aiswitch/releases/download/{{.Tag}}/aiswitch_{{.Version}}_darwin_arm64.tar.gz | tar xz
+    sudo mv aiswitch /usr/local/bin/
+
+    # Intel Mac
+    curl -L https://github.com/anmolnagpal/aiswitch/releases/download/{{.Tag}}/aiswitch_{{.Version}}_darwin_amd64.tar.gz | tar xz
+    sudo mv aiswitch /usr/local/bin/
+
+    # Linux amd64
+    curl -L https://github.com/anmolnagpal/aiswitch/releases/download/{{.Tag}}/aiswitch_{{.Version}}_linux_amd64.tar.gz | tar xz
+    sudo mv aiswitch /usr/local/bin/
+    ```
+
+    ### Windows
+    Download the `.zip` for your architecture, extract `aiswitch.exe`, and add it to your `PATH`.
+
+    ### Shell integration
+    ```bash
+    eval "$(aiswitch shell-init)"          # bash / zsh
+    aiswitch shell-init --shell fish | source   # fish
+    ```
+    PowerShell — add to `$PROFILE`:
+    ```powershell
+    Invoke-Expression (aiswitch shell-init --shell powershell | Out-String)
+    ```

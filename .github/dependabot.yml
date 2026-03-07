@@ -1,0 +1,29 @@
+version: 2
+updates:
+  # Keep Go modules up to date
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    labels:
+      - "dependencies"
+      - "go"
+    groups:
+      charmbracelet:
+        patterns:
+          - "github.com/charmbracelet/*"
+    open-pull-requests-limit: 10
+
+  # Keep GitHub Actions up to date
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    open-pull-requests-limit: 10
