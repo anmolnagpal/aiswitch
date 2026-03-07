@@ -1,71 +1,110 @@
-# aiswitch
+<div align="center">
 
-> Switch between Claude and GitHub Copilot accounts instantly — like `tfswitch`, but for AI.
+<h1>⚡ aiswitch</h1>
 
-If you have multiple Anthropic accounts (personal, work, client), or multiple GitHub accounts with different Copilot subscriptions, `aiswitch` lets you flip between them with a single command.
+<p><strong>Switch between Claude and GitHub Copilot accounts in one command.</strong><br/>
+Like <a href="https://github.com/warrensbox/terraform-switcher">tfswitch</a>, but for AI.</p>
+
+[![CI](https://github.com/anmolnagpal/aiswitch/actions/workflows/ci.yml/badge.svg)](https://github.com/anmolnagpal/aiswitch/actions/workflows/ci.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/anmolnagpal/aiswitch)](https://goreportcard.com/report/github.com/anmolnagpal/aiswitch)
+[![GitHub Release](https://img.shields.io/github/v/release/anmolnagpal/aiswitch?include_prereleases&sort=semver)](https://github.com/anmolnagpal/aiswitch/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/anmolnagpal/aiswitch)](go.mod)
+[![Platforms](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)](#installation)
+
+</div>
+
+---
 
 ```
 $ aiswitch
-┌─────────────────────────────────────────────────┐
-│  Switch AI Profile                              │
-└─────────────────────────────────────────────────┘
-  ▶ ● work         Claude + GitHub   (active)
-    ○ personal     Claude + GitHub
-    ○ client-x     Claude only
-    ○ open-source  GitHub only
+
+  Switch AI Profile
+
+  ▶ ● work          Claude + GitHub   (active)
+    ○ personal      Claude + GitHub
+    ○ client-x      Claude only
+    ○ open-source   GitHub only
 
   ↑/↓ navigate  •  enter select  •  / filter  •  q quit
 ```
 
 ---
 
-## What it does
+## Why aiswitch?
 
-| Service | What switches |
-|---|---|
-| **Claude / Anthropic** | Sets `ANTHROPIC_API_KEY` (+ optionally `ANTHROPIC_MODEL`), writes `~/.anthropic/api_key`, patches `~/.claude/.credentials.json` (Claude Code) |
-| **GitHub / Copilot** | Sets `GITHUB_TOKEN` / `GH_TOKEN`, updates `~/.config/gh/hosts.yml` active user (used by `gh` CLI and VS Code GitHub extension), optionally updates global `git config user.email` |
+Most developers juggle **multiple AI accounts** — a work Anthropic account on a premium plan, a personal Claude account, and two or three GitHub accounts each with a different Copilot subscription. Switching between them today means:
+
+- Manually editing `~/.bashrc` to change `ANTHROPIC_API_KEY`
+- Running `gh auth switch` and hoping VS Code picks it up
+- Forgetting which account is active mid-session and burning API quota on the wrong key
+
+**aiswitch** solves this the same way `tfswitch` solved Terraform versions and `nvm` solved Node versions: one command to switch, a `.aiswitch` file in each project to make it automatic.
+
+---
+
+## Features
+
+- **Interactive TUI** — fuzzy-searchable profile list with arrow-key navigation
+- **Instant switching** — `aiswitch use work` switches in under 100ms
+- **Per-project pinning** — commit a `.aiswitch` file; the profile switches automatically on `cd`
+- **Auto-detect cd hook** — works with zsh, bash, fish, and PowerShell
+- **Claude** — sets `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`, writes `~/.anthropic/api_key`, patches Claude Code credentials
+- **GitHub Copilot** — updates `~/.config/gh/hosts.yml` (the active `gh` CLI user), sets `GITHUB_TOKEN` / `GH_TOKEN`, optionally updates `git config user.email`
+- **Cross-platform** — macOS (Intel + Apple Silicon), Linux (amd64 + arm64), Windows (amd64)
+- **Zero runtime deps** — single self-contained binary, ~5 MB
 
 ---
 
 ## Installation
 
+### Recommended — `go install`
+
+```bash
+go install github.com/anmolnagpal/aiswitch@latest
+```
+
+### Download pre-built binary
+
+Head to [Releases](https://github.com/anmolnagpal/aiswitch/releases) and grab the archive for your platform, then move the binary onto your `$PATH`.
+
+```bash
+# macOS Apple Silicon
+curl -L https://github.com/anmolnagpal/aiswitch/releases/latest/download/aiswitch_darwin_arm64.tar.gz | tar xz
+sudo mv aiswitch /usr/local/bin/
+
+# macOS Intel
+curl -L https://github.com/anmolnagpal/aiswitch/releases/latest/download/aiswitch_darwin_amd64.tar.gz | tar xz
+sudo mv aiswitch /usr/local/bin/
+
+# Linux amd64
+curl -L https://github.com/anmolnagpal/aiswitch/releases/latest/download/aiswitch_linux_amd64.tar.gz | tar xz
+sudo mv aiswitch /usr/local/bin/
+```
+
 ### Build from source
 
 ```bash
-git clone https://github.com/anmolnagpal/aiswitch
+git clone https://github.com/anmolnagpal/aiswitch.git
 cd aiswitch
-make install          # builds and copies to /usr/local/bin/aiswitch
+make install   # builds and copies to /usr/local/bin/
 ```
-
-### Cross-platform release builds
-
-```bash
-make build-all        # macOS (intel + apple silicon), Linux (amd64 + arm64), Windows (amd64)
-make build-mac        # macOS only
-make build-linux      # Linux only
-make build-windows    # Windows only
-```
-
-Binaries appear in `./bin/`.
 
 ---
 
-## Shell integration (required for env vars)
+## Shell integration
 
-Because a child process cannot set env vars in the parent shell, `aiswitch` writes
-env vars to `~/.aiswitch/env.sh` (or `env.ps1` on Windows). The shell integration
-wraps the binary so that file is sourced automatically after every switch.
+Because a child process cannot modify the parent shell's environment, `aiswitch` writes env vars to `~/.aiswitch/env.sh` (or `env.ps1` on Windows). The shell integration is a thin wrapper that sources that file automatically — so `ANTHROPIC_API_KEY` is live in your current session right after every switch.
 
-### Bash / Zsh (macOS, Linux)
+It also installs a **`cd` hook** that auto-switches profiles when you enter a directory containing a `.aiswitch` file.
 
-Add to `~/.zshrc` or `~/.bashrc`:
+### Bash / Zsh
+
+Add to `~/.bashrc` or `~/.zshrc`, then `source` it:
 
 ```bash
 eval "$(aiswitch shell-init)"
 ```
-
-Then reload: `source ~/.zshrc`
 
 ### Fish
 
@@ -77,18 +116,10 @@ aiswitch shell-init --shell fish | source
 
 ### PowerShell (Windows)
 
-Add to `$PROFILE` (run `echo $PROFILE` to find the path):
+Add to `$PROFILE`:
 
 ```powershell
 Invoke-Expression (aiswitch shell-init --shell powershell | Out-String)
-```
-
-### Manual fallback (any shell)
-
-```bash
-# source after each switch yourself
-source ~/.aiswitch/env.sh          # bash/zsh/fish
-. $HOME/.aiswitch/env.ps1          # PowerShell
 ```
 
 ---
@@ -96,60 +127,45 @@ source ~/.aiswitch/env.sh          # bash/zsh/fish
 ## Quick start
 
 ```bash
-# 1. Add your first profile
-aiswitch add
+# 1. Add profiles for your accounts
+aiswitch add            # guided interactive form
 
-# 2. Switch to it
-aiswitch use work
+# 2. Switch to a profile
+aiswitch use work       # direct
+aiswitch                # interactive TUI picker
 
-# 3. Check what's active
+# 3. Verify what's active
 aiswitch current
 ```
 
 ---
 
-## Commands
+## Per-project `.aiswitch` file
 
-| Command | Description |
-|---|---|
-| `aiswitch` | Interactive profile selector (arrow keys + enter) |
-| `aiswitch use <profile>` | Switch directly without the interactive UI |
-| `aiswitch add [name]` | Add or update a profile (guided form) |
-| `aiswitch list` | List all profiles in a table |
-| `aiswitch remove <profile>` | Delete a profile |
-| `aiswitch current` | Show the active profile and live system state |
-| `aiswitch shell-init` | Print shell integration code (wrapper + cd hook) |
-| `aiswitch init` | Create a `.aiswitch` file in the current project directory |
-| `aiswitch detect` | Find and apply the nearest `.aiswitch` file (called by the cd hook) |
+Works exactly like `.terraform-version` (tfswitch) or `.nvmrc` (nvm). Commit a `.aiswitch` file to each project so the right AI account activates automatically.
 
----
-
-## Per-project profiles with `.aiswitch`
-
-Similar to `.terraform-version` for tfswitch or `.nvmrc` for nvm, you can pin
-each project to a specific AI profile by committing a `.aiswitch` file to its root.
-
-### Create one
+### Create it
 
 ```bash
 cd ~/my-work-project
-aiswitch init     # interactive — pick profile + optional overrides
+aiswitch init           # interactive form — pick profile + optional overrides
 ```
 
-This writes a `.aiswitch` file (no secrets, safe to commit):
+This writes a `.aiswitch` file. **It contains no secrets — safe to commit.**
 
 ```yaml
+# .aiswitch
 # aiswitch project config — safe to commit, contains no secrets
 profile: work
 
 claude:
-  model: claude-opus-4-5   # optional — overrides the profile default
+  model: claude-opus-4-5     # optional: pin a model for this project
 
 github:
-  email: me@company.com    # optional — overrides git commit email
+  email: me@company.com      # optional: override git commit email
 ```
 
-Or the minimal plain-text form:
+Minimal plain-text form also works:
 
 ```
 work
@@ -157,8 +173,7 @@ work
 
 ### Auto-switch on `cd`
 
-With shell integration active (`eval "$(aiswitch shell-init)"`), the profile
-switches automatically the moment you enter the directory — no manual step needed:
+With shell integration active, aiswitch switches the moment you enter the directory:
 
 ```
 ~/personal-project  $ echo $ANTHROPIC_API_KEY
@@ -171,24 +186,36 @@ sk-ant-personal-...
 sk-ant-work-...
 ```
 
-The hook:
-- fires on every `cd` (zsh `chpwd`, bash `PROMPT_COMMAND`, fish `--on-variable PWD`, PowerShell `Set-Location`)
-- is silent when the directory has no `.aiswitch` file
-- shows a one-line indicator when it switches
-- skips re-applying if you're already on the right profile
+The hook is **silent** when there's no `.aiswitch` file, **skips** if already on the right profile, and shows a one-liner only when it actually switches.
 
 ### Apply manually
 
 ```bash
-aiswitch detect          # verbose — shows what it switched and why
-aiswitch detect --quiet  # one-line indicator only (same as the hook)
+aiswitch detect           # verbose output
+aiswitch detect --quiet   # one-line indicator (same as what the hook shows)
 ```
 
 ---
 
-## Configuration
+## Commands
 
-Profiles are stored in `~/.aiswitch/config.json`.
+| Command | Description |
+|---|---|
+| `aiswitch` | Open the interactive profile selector |
+| `aiswitch use <profile>` | Switch to a profile directly |
+| `aiswitch add [name]` | Add or update a profile (guided form) |
+| `aiswitch list` | List all profiles in a table |
+| `aiswitch remove <profile>` | Delete a profile |
+| `aiswitch current` | Show the active profile and live system state |
+| `aiswitch init` | Create a `.aiswitch` file in the current directory |
+| `aiswitch detect [--quiet]` | Find and apply the nearest `.aiswitch` file |
+| `aiswitch shell-init [--shell]` | Print shell integration code |
+
+---
+
+## Configuration reference
+
+Global profiles are stored in `~/.aiswitch/config.json` (mode `0600`).
 
 ```json
 {
@@ -202,7 +229,7 @@ Profiles are stored in `~/.aiswitch/config.json`.
       },
       "github": {
         "token": "ghp_...",
-        "username": "work-user",
+        "username": "work-octocat",
         "email": "me@company.com"
       }
     },
@@ -212,41 +239,76 @@ Profiles are stored in `~/.aiswitch/config.json`.
       },
       "github": {
         "token": "ghp_...",
-        "username": "personal-user"
+        "username": "personal-octocat"
       }
     }
   }
 }
 ```
 
-> **Security note:** API keys and tokens are stored in plaintext in `~/.aiswitch/config.json` (mode `0600`, readable only by your user). This is the same approach used by the `gh` CLI and many other developer tools. Keyring integration is planned for a future release.
+### What each provider touches
 
----
+| Provider | Files / env vars written |
+|---|---|
+| **Claude** | `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` → `~/.aiswitch/env.sh` · `~/.anthropic/api_key` · `~/.claude/.credentials.json` (Claude Code) |
+| **GitHub** | `GITHUB_TOKEN`, `GH_TOKEN`, `GITHUB_USER` → `~/.aiswitch/env.sh` · `~/.config/gh/hosts.yml` (active user for `gh` CLI) · `git config --global user.email` |
 
-## GitHub Copilot notes
+> **Security note:** API keys and tokens are stored in `~/.aiswitch/config.json` with mode `0600` (owner-readable only). This is the same approach used by the `gh` CLI. OS keychain integration is on the roadmap.
 
-`aiswitch` switches the active user in the gh CLI config file:
+### GitHub Copilot path by OS
 
-| OS | Path |
+| OS | hosts.yml location |
 |---|---|
 | macOS / Linux | `~/.config/gh/hosts.yml` |
 | Windows | `%APPDATA%\GitHub CLI\hosts.yml` |
 
-This affects:
-
-- The `gh` CLI (runs as the new user immediately)
-- **VS Code GitHub Copilot** — VS Code reads its GitHub session from the OS keychain. After switching you may need to sign out and back in once inside VS Code (`Cmd+Shift+P → GitHub: Sign Out`), or simply open a new VS Code window (VS Code re-reads the gh token on startup).
+After switching, VS Code Copilot picks up the new token on the next window launch. If you need it immediately: `Cmd/Ctrl+Shift+P` → **GitHub: Sign Out**, then sign back in.
 
 ### Getting a GitHub token
 
-Go to [github.com/settings/tokens](https://github.com/settings/tokens) and create a fine-grained or classic PAT with these scopes:
+[github.com/settings/tokens](https://github.com/settings/tokens) — create a classic PAT with:
 
-- `repo` — for git operations
-- `read:user` — for user identity
-- `copilot` — for Copilot API access (if available on your plan)
+- `repo` — git operations
+- `read:user` — identity
+- `copilot` — Copilot API (if your plan exposes it)
+
+---
+
+## Contributing
+
+Contributions are welcome! Please open an issue first for large changes.
+
+```bash
+git clone https://github.com/anmolnagpal/aiswitch.git
+cd aiswitch
+go mod download
+make build          # build ./bin/aiswitch
+make run ARGS="--help"
+
+# Before submitting a PR
+go vet ./...
+golangci-lint run
+```
+
+### Roadmap
+
+- [ ] OS keychain integration for secrets (`99designs/keyring`)
+- [ ] `brew install aiswitch` (Homebrew tap)
+- [ ] Support for Cursor IDE, Windsurf, and other AI-first editors
+- [ ] More providers: OpenAI, Gemini, Ollama
+
+---
+
+## Related projects
+
+| Project | Does what |
+|---|---|
+| [tfswitch](https://github.com/warrensbox/terraform-switcher) | Terraform version switcher — the original inspiration |
+| [nvm](https://github.com/nvm-sh/nvm) | Node.js version switcher — same `.nvmrc` pattern |
+| [gh](https://github.com/cli/cli) | GitHub CLI — aiswitch manages its `hosts.yml` |
 
 ---
 
 ## License
 
-MIT
+MIT © [Anmol Nagpal](https://github.com/anmolnagpal)
