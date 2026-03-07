@@ -31,7 +31,7 @@ func (p profileItem) Description() string { return p.profile.Services() }
 type profileDelegate struct{}
 
 func (d profileDelegate) Height() int                             { return 2 }
-func (d profileDelegate) Spacing() int                           { return 1 }
+func (d profileDelegate) Spacing() int                            { return 1 }
 func (d profileDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
 
 func (d profileDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
@@ -43,12 +43,12 @@ func (d profileDelegate) Render(w io.Writer, m list.Model, index int, listItem l
 	isSelected := index == m.Index()
 
 	cursor := "  "
-	nameStyle := StyleMuted.Copy()
-	descStyle := StyleMuted.Copy()
+	nameStyle := StyleMuted
+	descStyle := StyleMuted
 
 	if isSelected {
 		cursor = StyleSelected.Render("▶ ")
-		nameStyle = StyleSelected.Copy()
+		nameStyle = StyleSelected
 		descStyle = lipgloss.NewStyle().Foreground(colorMuted)
 	}
 
@@ -100,7 +100,7 @@ func newSelectorModel(profiles map[string]config.Profile, active string) selecto
 
 	l := list.New(items, profileDelegate{}, 60, min(len(items)*3+6, 20))
 	l.Title = "Switch AI Profile"
-	l.Styles.Title = StyleHeader.Copy().
+	l.Styles.Title = StyleHeader.
 		BorderStyle(lipgloss.NormalBorder()).
 		BorderForeground(colorPrimary).
 		Foreground(colorPrimary).

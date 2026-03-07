@@ -195,7 +195,7 @@ var addCmd = &cobra.Command{
 		}
 
 		fmt.Println()
-		fmt.Println(ui.StyleSuccess.Render("✓ Profile \""+profileName+"\" saved"))
+		fmt.Println(ui.StyleSuccess.Render("✓ Profile \"" + profileName + "\" saved"))
 		fmt.Println(ui.StyleHint.Render("  Run: aiswitch use " + profileName))
 		return nil
 	},
