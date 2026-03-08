@@ -32,6 +32,13 @@ Provide a profile name to switch directly without the TUI.`,
 			return err
 		}
 
+		// First-run experience: no profiles yet → jump straight into `add`.
+		if len(cfg.Profiles) == 0 {
+			fmt.Println("Welcome to aiswitch! No profiles yet — let's add your first one.")
+			fmt.Println()
+			return addCmd.RunE(cmd, nil)
+		}
+
 		var target string
 
 		if len(args) == 1 {
