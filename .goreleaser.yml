@@ -20,9 +20,6 @@ builds:
     goarch:
       - amd64
       - arm64
-    # 32-bit Windows is still common enough to include.
-    goarm:
-      - "7"
     ignore:
       - goos: windows
         goarch: arm64
@@ -46,6 +43,7 @@ archives:
     files:
       - README.md
       - LICENSE
+      - CHANGELOG.md
 
 checksum:
   name_template: "checksums.txt"
@@ -55,16 +53,16 @@ changelog:
   use: github
   sort: asc
   groups:
-    - title: "Features"
+    - title: "✨ Features"
       regexp: "^.*feat[(\\[].*[)\\]]?:.*$"
       order: 0
-    - title: "Bug fixes"
+    - title: "🐛 Bug Fixes"
       regexp: "^.*fix[(\\[].*[)\\]]?:.*$"
       order: 1
-    - title: "Dependencies"
-      regexp: "^.*deps[(\\[].*[)\\]]?:.*$"
+    - title: "📦 Dependencies"
+      regexp: "^.*(deps|build)[(\\[].*[)\\]]?:.*$"
       order: 2
-    - title: "Other"
+    - title: "🔧 Other"
       order: 999
   filters:
     exclude:
@@ -78,19 +76,30 @@ release:
   github:
     owner: anmolnagpal
     name: aiswitch
-  name_template: "v{{.Version}}"
+  name_template: "⚡ aiswitch {{.Tag}}"
   draft: false
   prerelease: auto
-  footer: |
-    ## Installation
+  header: |
+    ## 🎉 First release of aiswitch!
 
-    ### macOS / Linux (bash/zsh)
+    **aiswitch** is a CLI tool for managing multiple AI provider accounts and switching between them instantly — like `tfswitch` for Terraform, but for AI.
+
+    Switch between **Claude**, **OpenAI**, **Gemini**, and **GitHub Copilot** accounts with a single command. Works with **Cursor** and **Windsurf** IDEs. Supports per-project `.aiswitch` files that auto-switch on `cd` (like `.nvmrc`).
+
+  footer: |
+    ---
+
+    ## 🚀 Quick install
+
     ```bash
-    # Apple Silicon
+    # Option 1 — go install (requires Go 1.22+)
+    go install github.com/anmolnagpal/aiswitch@latest
+
+    # Option 2 — pre-built binary (macOS Apple Silicon)
     curl -L https://github.com/anmolnagpal/aiswitch/releases/download/{{.Tag}}/aiswitch_{{.Version}}_darwin_arm64.tar.gz | tar xz
     sudo mv aiswitch /usr/local/bin/
 
-    # Intel Mac
+    # macOS Intel
     curl -L https://github.com/anmolnagpal/aiswitch/releases/download/{{.Tag}}/aiswitch_{{.Version}}_darwin_amd64.tar.gz | tar xz
     sudo mv aiswitch /usr/local/bin/
 
@@ -99,15 +108,25 @@ release:
     sudo mv aiswitch /usr/local/bin/
     ```
 
-    ### Windows
-    Download the `.zip` for your architecture, extract `aiswitch.exe`, and add it to your `PATH`.
+    Windows — download the `.zip` for your architecture, extract `aiswitch.exe`, and add it to your `PATH`.
 
-    ### Shell integration
+    ## ⚡ 30-second setup
+
     ```bash
-    eval "$(aiswitch shell-init)"          # bash / zsh
-    aiswitch shell-init --shell fish | source   # fish
+    aiswitch setup          # install shell integration (zsh/bash/fish/PowerShell)
+    source ~/.zshrc         # activate without restarting your terminal
+    aiswitch add            # add your first profile (interactive form)
+    aiswitch use work       # switch!
     ```
-    PowerShell — add to `$PROFILE`:
-    ```powershell
-    Invoke-Expression (aiswitch shell-init --shell powershell | Out-String)
-    ```
+
+    ## 🐚 Shell integration (manual)
+
+    | Shell | Add this line |
+    |---|---|
+    | Bash / Zsh | `eval "$(aiswitch shell-init)"` |
+    | Fish | `aiswitch shell-init --shell fish \| source` |
+    | PowerShell | `Invoke-Expression (aiswitch shell-init --shell powershell \| Out-String)` |
+
+    ---
+
+    ⭐ If aiswitch is useful to you, consider giving the [repo](https://github.com/anmolnagpal/aiswitch) a star — it helps others discover it!

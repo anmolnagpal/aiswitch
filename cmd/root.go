@@ -18,12 +18,13 @@ import (
 
 var rootCmd = &cobra.Command{
 	Use:   "aiswitch [profile]",
-	Short: "Switch between Claude and GitHub Copilot accounts instantly",
-	Long: `aiswitch lets you manage multiple Claude / GitHub Copilot identities
-and switch between them with a single command — similar to tfswitch for Terraform.
+	Short: "Switch between Claude, OpenAI, Gemini, and GitHub Copilot accounts",
+	Long: `aiswitch — manage multiple AI provider accounts and switch between them
+with a single command. Works with Claude, OpenAI, Gemini, GitHub Copilot,
+Cursor, and Windsurf. Like tfswitch for Terraform, but for AI.
 
-Run without arguments to open the interactive profile selector.
-Provide a profile name to switch directly without the interactive UI.`,
+Run without arguments to open the interactive profile picker.
+Provide a profile name to switch directly without the TUI.`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		cfg, err := config.Load()
@@ -48,6 +49,11 @@ Provide a profile name to switch directly without the interactive UI.`,
 
 		return applyProfile(cfg, target)
 	},
+}
+
+// SetVersion injects build-time version information into the root command.
+func SetVersion(version, commit, date string) {
+	rootCmd.Version = fmt.Sprintf("%s (commit: %s, built: %s)", version, commit, date)
 }
 
 // Execute is the entry point called from main.
