@@ -84,6 +84,9 @@ one command to switch, a `.aiswitch` file in each repo to switch automatically o
 | **Direct switch** | `aiswitch use work` — switches in under 100 ms |
 | **Per-project pinning** | Commit a `.aiswitch` file; profile switches automatically on `cd` |
 | **Auto cd hook** | zsh, bash, fish, PowerShell |
+| **Secrets separation** | API keys live in `~/.aiswitch/secrets.json` (0600); `config.json` contains no credentials |
+| **Clean provider handoff** | Switching away from a profile fully clears that provider's env block — no stale keys |
+| **Profile validation** | Names restricted to letters, digits, hyphens, and underscores |
 | **Claude** | Sets `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` · writes `~/.anthropic/api_key` · patches Claude Code credentials |
 | **OpenAI** | Sets `OPENAI_API_KEY`, `OPENAI_ORG_ID`, `OPENAI_MODEL` · writes `~/.config/openai/api_key` |
 | **Gemini** | Sets `GEMINI_API_KEY`, `GOOGLE_API_KEY`, `GEMINI_MODEL`, `GOOGLE_CLOUD_PROJECT` · writes `~/.config/gemini/api_key` |
@@ -341,7 +344,18 @@ aiswitch current
 
 ## Configuration reference
 
-### Global config — `~/.aiswitch/config.json`
+aiswitch stores all state in `~/.aiswitch/`. Two files are written on every save:
+
+| File | Contains | Mode |
+|---|---|---|
+| `~/.aiswitch/config.json` | Profile structure, models, IDE flags, git identity | `0600` |
+| `~/.aiswitch/secrets.json` | API keys and tokens only | `0600` |
+| `~/.aiswitch/env.sh` | Active env vars sourced by the shell | `0600` |
+| `~/.aiswitch/env.ps1` | PowerShell equivalent (Windows only) | `0600` |
+
+Secrets are automatically migrated out of any legacy `config.json` that still contains plaintext keys on the next save.
+
+### `~/.aiswitch/config.json`
 
 ```json
 {
@@ -350,21 +364,17 @@ aiswitch current
     "work": {
       "description": "Day-job accounts",
       "claude": {
-        "api_key": "sk-ant-...",
         "default_model": "claude-opus-4-5"
       },
       "openai": {
-        "api_key": "sk-proj-...",
         "org_id": "org-...",
         "default_model": "gpt-4o"
       },
       "gemini": {
-        "api_key": "AIza...",
         "default_model": "gemini-2.0-flash",
         "project_id": "my-gcp-project"
       },
       "github": {
-        "token": "ghp_...",
         "username": "work-octocat",
         "email": "me@company.com"
       },
@@ -377,7 +387,20 @@ aiswitch current
 }
 ```
 
-The file is created and managed by the `add` wizard. You rarely need to edit it by hand.
+### `~/.aiswitch/secrets.json`
+
+```json
+{
+  "work": {
+    "claude_api_key": "sk-ant-...",
+    "openai_api_key": "sk-proj-...",
+    "gemini_api_key": "AIza...",
+    "github_token": "ghp_..."
+  }
+}
+```
+
+Both files are created and managed by the `add` wizard. You rarely need to edit them by hand.
 
 ### What each provider writes
 
@@ -413,13 +436,24 @@ After switching, VS Code / Cursor / Windsurf Copilot picks up the new token on t
 
 ## Security
 
-API keys and tokens are stored in `~/.aiswitch/config.json` with mode `0600` (readable only by you). This is the same model used by the `gh` CLI.
+API keys and tokens are stored **separately** from profile configuration:
+
+| File | Secret? | Notes |
+|---|---|---|
+| `~/.aiswitch/config.json` | No | Models, IDE flags, git identity — no credentials |
+| `~/.aiswitch/secrets.json` | **Yes** | API keys and tokens only · mode `0600` |
+| `~/.aiswitch/env.sh` | **Yes** | Active keys exported to the shell · mode `0600` |
+| `.aiswitch` (project file) | No | Just a profile name · safe to commit |
+
+This separation means dotfiles managers or backup tools that track `~/.aiswitch/` cannot accidentally capture credentials through `config.json` — secrets are always in their own `0600` file.
 
 **What to be careful about:**
 
-- Do **not** commit `~/.aiswitch/config.json` — it contains secrets
+- Do **not** commit `~/.aiswitch/secrets.json` or `~/.aiswitch/env.sh` — they contain secrets
 - The per-project `.aiswitch` file **does not contain any secrets** — safe to commit
-- `~/.aiswitch/env.sh` is also secret (it contains the active key) — it is in `.gitignore`
+- All sensitive files are listed in this repo's `.gitignore` as a reference
+
+**Stale key safety:** switching away from a profile that used a provider fully clears that provider's block in `env.sh` — the old key is never left behind.
 
 **Found a vulnerability?** Please do not open a public issue. Instead, email the maintainer directly or use [GitHub private vulnerability reporting](https://github.com/anmolnagpal/aiswitch/security/advisories/new).
 
