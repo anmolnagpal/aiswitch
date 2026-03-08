@@ -7,6 +7,29 @@ Versioning: [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ---
 
+## [0.2.0] — 2026-03-08
+
+### ✨ Added
+- **First-run wizard** — running `aiswitch` with no profiles drops straight into `aiswitch add` instead of showing an error
+
+### 🔒 Security
+- **Secrets separation** — API keys and tokens moved to `~/.aiswitch/secrets.json` (mode `0600`); `config.json` now contains zero credentials
+- **Auto-migration** — legacy `config.json` files with plaintext keys are silently migrated to `secrets.json` on next save
+- **Clean provider handoff** — switching away from a profile fully clears that provider's block in `env.sh`, preventing stale keys from persisting
+
+### 🛠 Improvements
+- **Profile name validation** — names restricted to letters, digits, hyphens, and underscores
+- **Shell detection** — `detectShell()` now falls back to `$ZSH_VERSION` / `$FISH_VERSION` when `$SHELL` is unset
+- **PS1 fix** — `env.ps1` is only generated on Windows; non-Windows systems no longer create the file
+- **`omitempty` on all sensitive fields** — empty `api_key` fields no longer appear as `""` in `config.json`
+- **Shared merge helpers** — provider env-file logic extracted into `internal/providers/merge` package, eliminating duplication across all four providers
+- **Consistent secret masking** — three different private `maskSecret()` implementations unified into `internal/ui.MaskSecret()`
+
+### 🧪 Testing
+- **Integration test suite** — builds the real binary and exercises all commands against an isolated temp home
+
+---
+
 ## [0.1.0] — 2026-03-08 🎉
 
 > First public release of aiswitch — switch between Claude, OpenAI, Gemini,
