@@ -282,13 +282,17 @@ Contributions are welcome! Please open an issue first for large changes.
 git clone https://github.com/anmolnagpal/aiswitch.git
 cd aiswitch
 go mod download
-make build          # build ./bin/aiswitch
-make run ARGS="--help"
 
-# Before submitting a PR
-go vet ./...
-golangci-lint run
+# Activate git hooks — blocks commits that fail lint (run this once after cloning)
+make hooks
+
+make build          # build ./bin/aiswitch
+make fmt            # auto-format all Go files
+make lint           # run golangci-lint
+make run ARGS="--help"
 ```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for commit message format and full workflow.
 
 ### Roadmap
 

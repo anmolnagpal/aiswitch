@@ -1,4 +1,4 @@
-.PHONY: build install build-all build-linux build-windows build-mac clean tidy
+.PHONY: build install build-all build-linux build-windows build-mac clean tidy hooks hooks-check lint fmt
 
 BINARY    := aiswitch
 BUILD_DIR := ./bin
@@ -54,3 +54,31 @@ clean:
 
 run:
 	GOTOOLCHAIN=auto go run . $(ARGS)
+
+# ── Code quality ──────────────────────────────────────────────────────────────
+
+fmt:
+	gofmt -w $$(find . -name '*.go' -not -path './vendor/*')
+	@echo "✓ Formatted"
+
+lint:
+	golangci-lint run --timeout=5m
+
+# ── Git hooks ─────────────────────────────────────────────────────────────────
+
+hooks:
+	@chmod +x .githooks/pre-commit .githooks/commit-msg
+	@git config core.hooksPath .githooks
+	@echo "✓ Git hooks activated (.githooks/)"
+	@echo "  pre-commit : gofmt + go vet + go build + golangci-lint"
+	@echo "  commit-msg : Conventional Commits format check"
+	@echo ""
+	@echo "  To skip a hook in an emergency: git commit --no-verify"
+
+hooks-check:
+	@if [ "$$(git config core.hooksPath)" = ".githooks" ]; then \
+		echo "✓ Hooks are active (.githooks/)"; \
+	else \
+		echo "✗ Hooks not active — run: make hooks"; \
+		exit 1; \
+	fi
