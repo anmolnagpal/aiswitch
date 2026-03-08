@@ -1,4 +1,4 @@
-version: 2
+version: "2"
 
 linters:
   enable:
@@ -22,6 +22,7 @@ formatters:
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
-  exclude-rules:
-    - path: "_test\\.go"
-      linters: [unparam, errcheck]
+  exclusions:
+    rules:
+      - path: "_test\\.go"
+        linters: [unparam, errcheck]
