@@ -84,7 +84,16 @@ release:
 
     **aiswitch** is a CLI tool for managing multiple AI provider accounts and switching between them instantly — like `tfswitch` for Terraform, but for AI.
 
-    Switch between **Claude**, **OpenAI**, **Gemini**, and **GitHub Copilot** accounts with a single command. Works with **Cursor** and **Windsurf** IDEs. Supports per-project `.aiswitch` files that auto-switch on `cd` (like `.nvmrc`).
+    Switch between **Claude**, **OpenAI**, **Gemini**, and **GitHub Copilot** accounts with a single command. Works with **Cursor** and **Windsurf** IDEs out of the box. Supports per-project `.aiswitch` files that auto-switch profiles when you `cd` into a directory (like `.nvmrc` for Node).
+
+    ### What's in this release
+    - ✨ **4 AI providers** — Claude, OpenAI, Gemini, GitHub Copilot
+    - 🖥️ **2 IDEs** — Cursor and Windsurf (patches `settings.json` automatically)
+    - 🐚 **4 shells** — zsh, bash, fish, PowerShell (one-command setup: `aiswitch setup`)
+    - 📁 **Per-project pinning** — `.aiswitch` file auto-switches on `cd`
+    - 🔒 **Secrets separated** — API keys in `~/.aiswitch/secrets.json` (0600), never leaked to config
+    - 🧹 **Clean handoff** — stale env blocks cleared on every switch
+    - 🖥️ **5 platforms** — macOS arm64/amd64, Linux arm64/amd64, Windows amd64
 
   footer: |
     ---
