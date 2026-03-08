@@ -1,6 +1,10 @@
 version: "2"
 
+run:
+  timeout: 5m
+
 linters:
+  default: none
   enable:
     - errcheck
     - govet
@@ -9,6 +13,11 @@ linters:
     - misspell
     - unconvert
     - unparam
+    - unused
+  exclusions:
+    rules:
+      - path: "_test\\.go"
+        linters: [unparam, errcheck]
 
 formatters:
   enable:
@@ -22,7 +31,3 @@ formatters:
 issues:
   max-issues-per-linter: 0
   max-same-issues: 0
-  exclusions:
-    rules:
-      - path: "_test\\.go"
-        linters: [unparam, errcheck]
