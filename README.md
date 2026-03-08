@@ -3,8 +3,9 @@
 <h1>⚡ aiswitch</h1>
 
 <p><strong>Switch between Claude, OpenAI, Gemini, and GitHub Copilot accounts in one command.<br/>
-Works with Cursor, Windsurf, and any terminal tool.</strong><br/>
-Like <a href="https://github.com/warrensbox/terraform-switcher">tfswitch</a>, but for AI.</p>
+Works with Cursor, Windsurf, and every terminal tool — on macOS, Linux, and Windows.</strong></p>
+
+<p>Like <a href="https://github.com/warrensbox/terraform-switcher">tfswitch</a> for Terraform versions, or <a href="https://github.com/nvm-sh/nvm">nvm</a> for Node — but for your AI accounts.</p>
 
 [![CI](https://github.com/anmolnagpal/aiswitch/actions/workflows/ci.yml/badge.svg)](https://github.com/anmolnagpal/aiswitch/actions/workflows/ci.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/anmolnagpal/aiswitch)](https://goreportcard.com/report/github.com/anmolnagpal/aiswitch)
@@ -12,6 +13,7 @@ Like <a href="https://github.com/warrensbox/terraform-switcher">tfswitch</a>, bu
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/anmolnagpal/aiswitch)](go.mod)
 [![Platforms](https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey)](#installation)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
 </div>
 
@@ -32,47 +34,80 @@ $ aiswitch
 
 ---
 
+## Table of Contents
+
+- [Why aiswitch?](#why-aiswitch)
+- [Features](#features)
+- [Installation](#installation)
+- [Shell integration](#shell-integration)
+- [Quick start](#quick-start)
+- [Per-project `.aiswitch` file](#per-project-aiswitch-file)
+- [IDE integration](#ide-integration)
+- [Commands](#commands)
+- [Configuration reference](#configuration-reference)
+- [Security](#security)
+- [Contributing](#contributing)
+- [Roadmap](#roadmap)
+- [Related projects](#related-projects)
+- [License](#license)
+
+---
+
 ## Why aiswitch?
 
-Most developers juggle **multiple AI accounts** — a work Anthropic account on a premium plan, a personal Claude account, an OpenAI key for GPT-4o, a Gemini key for AI Studio experiments, and two or three GitHub accounts each with a different Copilot subscription. Switching between them today means:
+Most developers today juggle **multiple AI accounts** at the same time:
 
-- Manually editing `~/.bashrc` to swap `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY` …
-- Running `gh auth switch` and hoping VS Code / Cursor / Windsurf picks it up
-- Digging into **Cursor → Settings → Models** or **Windsurf Preferences** to re-enter keys by hand
-- Forgetting which account is active mid-session and burning API quota on the wrong key
+| Account | Why you have more than one |
+|---|---|
+| Claude (Anthropic) | Work team plan + personal account |
+| OpenAI | Different org keys per client project |
+| Gemini | AI Studio for experiments, Vertex AI for prod |
+| GitHub Copilot | Separate GitHub accounts for work vs. open-source |
 
-**aiswitch** solves this the same way `tfswitch` solved Terraform versions and `nvm` solved Node versions: one command to switch, a `.aiswitch` file in each project to make it automatic.
+Switching between them manually means:
+
+- Editing `~/.bashrc` to swap `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY` …
+- Re-entering keys in **Cursor → Settings → Models** or **Windsurf Preferences**
+- Running `gh auth switch` and hoping your IDE picks it up
+- Burning quota on the wrong account because you forgot to switch
+
+**aiswitch** fixes this the same way `tfswitch` fixed Terraform versions:  
+one command to switch, a `.aiswitch` file in each repo to switch automatically on `cd`.
 
 ---
 
 ## Features
 
-- **Interactive TUI** — fuzzy-searchable profile list with arrow-key navigation
-- **Instant switching** — `aiswitch use work` switches in under 100ms
-- **Per-project pinning** — commit a `.aiswitch` file; the profile switches automatically on `cd`
-- **Auto-detect cd hook** — works with zsh, bash, fish, and PowerShell
-- **Claude** — sets `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`, writes `~/.anthropic/api_key`, patches Claude Code credentials
-- **OpenAI** — sets `OPENAI_API_KEY`, `OPENAI_ORG_ID`, `OPENAI_MODEL`, writes `~/.config/openai/api_key`
-- **Gemini** — sets `GEMINI_API_KEY`, `GOOGLE_API_KEY`, `GEMINI_MODEL`, `GOOGLE_CLOUD_PROJECT`, writes `~/.config/gemini/api_key`
-- **GitHub Copilot** — updates `~/.config/gh/hosts.yml`, sets `GITHUB_TOKEN` / `GH_TOKEN`, optionally updates `git config user.email`
-- **Cursor IDE** — patches `settings.json` with `anthropic.apiKey`, `openai.apiKey`, `googleGenerativeAI.apiKey` — no restart needed
-- **Windsurf IDE** — same `settings.json` patching for Windsurf (Codeium)
-- **Cross-platform** — macOS (Intel + Apple Silicon), Linux (amd64 + arm64), Windows (amd64)
-- **Zero runtime deps** — single self-contained binary, ~5 MB
+| Category | What it does |
+|---|---|
+| **Interactive TUI** | Fuzzy-searchable profile list with arrow-key navigation |
+| **Direct switch** | `aiswitch use work` — switches in under 100 ms |
+| **Per-project pinning** | Commit a `.aiswitch` file; profile switches automatically on `cd` |
+| **Auto cd hook** | zsh, bash, fish, PowerShell |
+| **Claude** | Sets `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` · writes `~/.anthropic/api_key` · patches Claude Code credentials |
+| **OpenAI** | Sets `OPENAI_API_KEY`, `OPENAI_ORG_ID`, `OPENAI_MODEL` · writes `~/.config/openai/api_key` |
+| **Gemini** | Sets `GEMINI_API_KEY`, `GOOGLE_API_KEY`, `GEMINI_MODEL`, `GOOGLE_CLOUD_PROJECT` · writes `~/.config/gemini/api_key` |
+| **GitHub Copilot** | Sets `GITHUB_TOKEN`, `GH_TOKEN` · updates `~/.config/gh/hosts.yml` · optionally sets `git config user.email` |
+| **Cursor IDE** | Patches `settings.json` — `anthropic.apiKey`, `openai.apiKey`, `googleGenerativeAI.apiKey` |
+| **Windsurf IDE** | Same `settings.json` patching (Codeium/Windsurf) |
+| **Cross-platform** | macOS (Intel + Apple Silicon), Linux (amd64 + arm64), Windows (amd64) |
+| **Zero runtime deps** | Single static binary, ~5 MB |
 
 ---
 
 ## Installation
 
-### Recommended — `go install`
+### Option 1 — `go install` (recommended)
 
 ```bash
 go install github.com/anmolnagpal/aiswitch@latest
 ```
 
-### Download pre-built binary
+Requires Go 1.22+. The binary is placed in `$(go env GOPATH)/bin` — make sure that's on your `$PATH`.
 
-Head to [Releases](https://github.com/anmolnagpal/aiswitch/releases) and grab the archive for your platform, then move the binary onto your `$PATH`.
+### Option 2 — Pre-built binary
+
+Download the latest binary for your platform from [Releases](https://github.com/anmolnagpal/aiswitch/releases):
 
 ```bash
 # macOS Apple Silicon
@@ -88,7 +123,7 @@ curl -L https://github.com/anmolnagpal/aiswitch/releases/latest/download/aiswitc
 sudo mv aiswitch /usr/local/bin/
 ```
 
-### Build from source
+### Option 3 — Build from source
 
 ```bash
 git clone https://github.com/anmolnagpal/aiswitch.git
@@ -96,23 +131,27 @@ cd aiswitch
 make install   # builds and copies to /usr/local/bin/
 ```
 
+### Verify
+
+```bash
+aiswitch --version
+```
+
 ---
 
 ## Shell integration
 
-Because a child process cannot modify the parent shell's environment, `aiswitch` writes env vars to `~/.aiswitch/env.sh` (or `env.ps1` on Windows). The shell integration is a thin wrapper that sources that file automatically — so `ANTHROPIC_API_KEY` is live in your current session right after every switch.
+Because a child process cannot modify the parent shell's environment, `aiswitch` writes env vars to `~/.aiswitch/env.sh` (or `env.ps1` on Windows). The shell integration is a thin wrapper that sources that file automatically — so keys like `ANTHROPIC_API_KEY` are live in your **current** session right after every switch.
 
 It also installs a **`cd` hook** that auto-switches profiles when you enter a directory containing a `.aiswitch` file.
 
 ### Automatic setup (recommended)
 
-Run this **once** after installing. It detects your shell and appends the one-liner to the right profile file:
+Run **once** after installing:
 
 ```bash
 aiswitch setup
 ```
-
-Output:
 
 ```
 ✓ Shell integration written to /Users/you/.zshrc
@@ -127,16 +166,14 @@ Output:
 Options:
 
 ```bash
-aiswitch setup --shell bash        # target a specific shell
-aiswitch setup --dry-run           # preview without writing
-aiswitch setup --force             # remove old block and re-install
+aiswitch setup --shell bash     # target a specific shell (auto-detected by default)
+aiswitch setup --dry-run        # preview the line that would be added
+aiswitch setup --force          # replace an existing block (after upgrading)
 ```
 
 ### Manual setup
 
-If you prefer to control exactly what goes in your profile, add the one-liner yourself:
-
-| Shell | File | Line to add |
+| Shell | Profile file | Line to add |
 |---|---|---|
 | **Zsh** | `~/.zshrc` | `eval "$(aiswitch shell-init --shell zsh)"` |
 | **Bash** (Linux) | `~/.bashrc` | `eval "$(aiswitch shell-init --shell bash)"` |
@@ -144,14 +181,16 @@ If you prefer to control exactly what goes in your profile, add the one-liner yo
 | **Fish** | `~/.config/fish/config.fish` | `aiswitch shell-init --shell fish \| source` |
 | **PowerShell** | `$PROFILE` | `Invoke-Expression (aiswitch shell-init --shell powershell \| Out-String)` |
 
-### What the integration does
+### How the integration works
 
-```bash
-# 1. Wrapper function — env vars apply in the CURRENT session after every switch:
-aiswitch use work   # → runs binary, then sources ~/.aiswitch/env.sh automatically
+```
+aiswitch use work
+  → writes ANTHROPIC_API_KEY, OPENAI_API_KEY … to ~/.aiswitch/env.sh
+  → shell wrapper sources env.sh → keys live in current session ✓
 
-# 2. cd hook — auto-switches when you enter a project directory:
-cd ~/work-project   # → aiswitch detect runs, reads .aiswitch, applies profile
+cd ~/work-project            # directory has a .aiswitch file
+  → cd hook calls `aiswitch detect`
+  → profile switches automatically ✓
 ```
 
 ---
@@ -159,18 +198,18 @@ cd ~/work-project   # → aiswitch detect runs, reads .aiswitch, applies profile
 ## Quick start
 
 ```bash
-# 1. Install shell integration (once)
-aiswitch setup          # auto-detects your shell, appends to ~/.zshrc / ~/.bashrc / etc.
-source ~/.zshrc         # activate immediately (or open a new tab)
+# 1. Install shell integration (once per machine)
+aiswitch setup
+source ~/.zshrc          # or restart your terminal
 
-# 2. Add profiles for your accounts
-aiswitch add            # guided interactive form
+# 2. Add your accounts
+aiswitch add             # interactive form — name, providers, IDE options
 
-# 3. Switch to a profile
-aiswitch use work       # direct
-aiswitch                # interactive TUI picker
+# 3. Switch profiles
+aiswitch use work        # direct switch
+aiswitch                 # interactive TUI picker
 
-# 4. Verify what's active
+# 4. Check what's active
 aiswitch current
 ```
 
@@ -178,44 +217,40 @@ aiswitch current
 
 ## Per-project `.aiswitch` file
 
-Works exactly like `.terraform-version` (tfswitch) or `.nvmrc` (nvm). Commit a `.aiswitch` file to each project so the right AI account activates automatically.
+Works exactly like `.terraform-version` or `.nvmrc`.  
+Commit a `.aiswitch` file to each repo so the right AI account activates on `cd`.
 
-### Create it
+### Create
 
 ```bash
 cd ~/my-work-project
-aiswitch init           # interactive form — pick profile + optional overrides
+aiswitch init            # interactive form — pick profile + optional model overrides
 ```
 
-This writes a `.aiswitch` file. **It contains no secrets — safe to commit.**
+This creates a file that **contains no secrets — safe to commit**:
 
 ```yaml
 # .aiswitch
-# aiswitch project config — safe to commit, contains no secrets
 profile: work
 
+# Optional per-project model overrides (layer on top of the profile default)
 claude:
-  model: claude-opus-4-5       # optional: pin a model for this project
-
+  model: claude-opus-4-5
 openai:
-  model: gpt-4o                # optional: pin an OpenAI model
-
+  model: gpt-4o
 gemini:
-  model: gemini-2.0-flash      # optional: pin a Gemini model
-
+  model: gemini-2.0-flash
 github:
-  email: me@company.com        # optional: override git commit email
+  email: me@company.com  # overrides git commit email in this repo
 ```
 
-Minimal plain-text form also works:
+Plain-text shorthand also works (just the profile name):
 
 ```
 work
 ```
 
 ### Auto-switch on `cd`
-
-With shell integration active, aiswitch switches the moment you enter the directory:
 
 ```
 ~/personal-project  $ echo $ANTHROPIC_API_KEY
@@ -228,13 +263,61 @@ sk-ant-personal-...
 sk-ant-work-...
 ```
 
-The hook is **silent** when there's no `.aiswitch` file, **skips** if already on the right profile, and shows a one-liner only when it actually switches.
+The hook is **silent** when there's no `.aiswitch` file, **skips** if already on the correct profile, and prints one line only when it actually switches.
 
 ### Apply manually
 
 ```bash
-aiswitch detect           # verbose output
-aiswitch detect --quiet   # one-line indicator (same as what the hook shows)
+aiswitch detect           # apply nearest .aiswitch, show what changed
+aiswitch detect --quiet   # same, but only prints the one-line indicator
+```
+
+---
+
+## IDE integration
+
+aiswitch patches `settings.json` for **Cursor** and **Windsurf** on every profile switch.  
+No IDE restart required — VS Code-based editors hot-reload `settings.json`.
+
+### Keys written per provider
+
+| Provider | Key written to `settings.json` |
+|---|---|
+| Claude | `anthropic.apiKey`, `anthropic.defaultModel` |
+| OpenAI | `openai.apiKey`, `openai.organization`, `openai.defaultModel` |
+| Gemini | `googleGenerativeAI.apiKey`, `googleGenerativeAI.defaultModel` |
+
+All other existing settings are preserved.
+
+### Settings file locations
+
+| IDE | macOS | Linux | Windows |
+|---|---|---|---|
+| Cursor | `~/Library/Application Support/Cursor/User/settings.json` | `~/.config/Cursor/User/settings.json` | `%APPDATA%\Cursor\User\settings.json` |
+| Windsurf | `~/Library/Application Support/Windsurf/User/settings.json` | `~/.config/Windsurf/User/settings.json` | `%APPDATA%\Windsurf\User\settings.json` |
+
+### Enable
+
+During `aiswitch add`, the wizard detects installed IDEs and shows a multi-select:
+
+```
+? Patch IDE settings.json with API keys?
+  [x] Cursor IDE  ✓ installed
+  [ ] Windsurf IDE
+```
+
+Or enable manually in `~/.aiswitch/config.json`:
+
+```json
+"ide": { "cursor": true, "windsurf": true }
+```
+
+### Verify
+
+```bash
+aiswitch current
+# Cursor    settings.json patched · sk-a...ey12
+# Windsurf  not installed or not yet patched
 ```
 
 ---
@@ -243,22 +326,22 @@ aiswitch detect --quiet   # one-line indicator (same as what the hook shows)
 
 | Command | Description |
 |---|---|
-| `aiswitch` | Open the interactive profile selector |
-| `aiswitch use <profile>` | Switch to a profile directly |
+| `aiswitch` | Open the interactive profile picker |
+| `aiswitch use <profile>` | Switch to a named profile |
 | `aiswitch add [name]` | Add or update a profile (guided form) |
 | `aiswitch list` | List all profiles in a table |
 | `aiswitch remove <profile>` | Delete a profile |
 | `aiswitch current` | Show the active profile and live system state |
 | `aiswitch init` | Create a `.aiswitch` file in the current directory |
 | `aiswitch detect [--quiet]` | Find and apply the nearest `.aiswitch` file |
-| `aiswitch setup [--shell] [--dry-run] [--force]` | Install shell integration into your profile file |
-| `aiswitch shell-init [--shell]` | Print shell integration code (for manual setup) |
+| `aiswitch setup [--shell] [--dry-run] [--force]` | Write shell integration into your profile file |
+| `aiswitch shell-init [--shell]` | Print shell integration code (manual setup) |
 
 ---
 
 ## Configuration reference
 
-Global profiles are stored in `~/.aiswitch/config.json` (mode `0600`).
+### Global config — `~/.aiswitch/config.json`
 
 ```json
 {
@@ -270,42 +353,51 @@ Global profiles are stored in `~/.aiswitch/config.json` (mode `0600`).
         "api_key": "sk-ant-...",
         "default_model": "claude-opus-4-5"
       },
+      "openai": {
+        "api_key": "sk-proj-...",
+        "org_id": "org-...",
+        "default_model": "gpt-4o"
+      },
+      "gemini": {
+        "api_key": "AIza...",
+        "default_model": "gemini-2.0-flash",
+        "project_id": "my-gcp-project"
+      },
       "github": {
         "token": "ghp_...",
         "username": "work-octocat",
         "email": "me@company.com"
-      }
-    },
-    "personal": {
-      "claude": {
-        "api_key": "sk-ant-..."
       },
-      "github": {
-        "token": "ghp_...",
-        "username": "personal-octocat"
+      "ide": {
+        "cursor": true,
+        "windsurf": false
       }
     }
   }
 }
 ```
 
-### What each provider touches
+The file is created and managed by the `add` wizard. You rarely need to edit it by hand.
 
-| Provider | Files / env vars written |
-|---|---|
-| **Claude** | `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` → `~/.aiswitch/env.sh` · `~/.anthropic/api_key` · `~/.claude/.credentials.json` (Claude Code) |
-| **GitHub** | `GITHUB_TOKEN`, `GH_TOKEN`, `GITHUB_USER` → `~/.aiswitch/env.sh` · `~/.config/gh/hosts.yml` (active user for `gh` CLI) · `git config --global user.email` |
+### What each provider writes
 
-> **Security note:** API keys and tokens are stored in `~/.aiswitch/config.json` with mode `0600` (owner-readable only). This is the same approach used by the `gh` CLI. OS keychain integration is on the roadmap.
+| Provider | Env vars (`~/.aiswitch/env.sh`) | Files written |
+|---|---|---|
+| **Claude** | `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL` | `~/.anthropic/api_key`, `~/.claude/.credentials.json` |
+| **OpenAI** | `OPENAI_API_KEY`, `OPENAI_ORG_ID`, `OPENAI_MODEL` | `~/.config/openai/api_key` |
+| **Gemini** | `GEMINI_API_KEY`, `GOOGLE_API_KEY`, `GEMINI_MODEL`, `GOOGLE_CLOUD_PROJECT` | `~/.config/gemini/api_key` |
+| **GitHub** | `GITHUB_TOKEN`, `GH_TOKEN`, `GITHUB_USER` | `~/.config/gh/hosts.yml`, `git config --global user.email` |
+| **Cursor/Windsurf** | — | `settings.json` (`anthropic.apiKey`, `openai.apiKey`, `googleGenerativeAI.apiKey`) |
 
-### GitHub Copilot path by OS
+### Per-project `.aiswitch` file reference
 
-| OS | hosts.yml location |
-|---|---|
-| macOS / Linux | `~/.config/gh/hosts.yml` |
-| Windows | `%APPDATA%\GitHub CLI\hosts.yml` |
-
-After switching, VS Code Copilot picks up the new token on the next window launch. If you need it immediately: `Cmd/Ctrl+Shift+P` → **GitHub: Sign Out**, then sign back in.
+| Key | Type | Description |
+|---|---|---|
+| `profile` | string | **Required.** Global profile to activate. |
+| `claude.model` | string | Override `default_model` for Claude in this directory. |
+| `openai.model` | string | Override `default_model` for OpenAI in this directory. |
+| `gemini.model` | string | Override `default_model` for Gemini in this directory. |
+| `github.email` | string | Override `git config user.email` in this directory. |
 
 ### Getting a GitHub token
 
@@ -315,110 +407,115 @@ After switching, VS Code Copilot picks up the new token on the next window launc
 - `read:user` — identity
 - `copilot` — Copilot API (if your plan exposes it)
 
+After switching, VS Code / Cursor / Windsurf Copilot picks up the new token on the next extension reload. For an immediate refresh: `Cmd/Ctrl+Shift+P` → **GitHub: Sign Out**, then sign back in.
+
 ---
 
-## IDE integration
+## Security
 
-aiswitch can patch the `settings.json` of **Cursor** and **Windsurf** on every profile switch, so the IDE's built-in AI features automatically use the right API keys without any manual reconfiguration.
+API keys and tokens are stored in `~/.aiswitch/config.json` with mode `0600` (readable only by you). This is the same model used by the `gh` CLI.
 
-### How it works
+**What to be careful about:**
 
-When you enable an IDE in your profile, aiswitch writes these keys into the IDE's `settings.json`:
+- Do **not** commit `~/.aiswitch/config.json` — it contains secrets
+- The per-project `.aiswitch` file **does not contain any secrets** — safe to commit
+- `~/.aiswitch/env.sh` is also secret (it contains the active key) — it is in `.gitignore`
 
-| Provider | Setting key written |
-|---|---|
-| Claude | `anthropic.apiKey`, `anthropic.defaultModel` |
-| OpenAI | `openai.apiKey`, `openai.organization`, `openai.defaultModel` |
-| Gemini | `googleGenerativeAI.apiKey`, `googleGenerativeAI.defaultModel` |
+**Found a vulnerability?** Please do not open a public issue. Instead, email the maintainer directly or use [GitHub private vulnerability reporting](https://github.com/anmolnagpal/aiswitch/security/advisories/new).
 
-All other existing settings are preserved. The IDE does **not** need to be restarted — VS Code-based editors hot-reload `settings.json`.
-
-### Settings file locations
-
-| IDE | macOS | Linux | Windows |
-|---|---|---|---|
-| Cursor | `~/Library/Application Support/Cursor/User/settings.json` | `~/.config/Cursor/User/settings.json` | `%APPDATA%\Cursor\User\settings.json` |
-| Windsurf | `~/Library/Application Support/Windsurf/User/settings.json` | `~/.config/Windsurf/User/settings.json` | `%APPDATA%\Windsurf\User\settings.json` |
-
-### Enable during `aiswitch add`
-
-The `add` wizard automatically detects installed IDEs (marked **✓ installed**) and presents them as a multi-select:
-
-```
-? Patch IDE settings.json with API keys?
-  [x] Cursor IDE  ✓ installed
-  [ ] Windsurf IDE
-```
-
-### Enable manually
-
-Edit `~/.aiswitch/config.json` and add an `ide` block to any profile:
-
-```json
-{
-  "active_profile": "work",
-  "profiles": {
-    "work": {
-      "claude": { "api_key": "sk-ant-..." },
-      "openai": { "api_key": "sk-proj-..." },
-      "ide": {
-        "cursor": true,
-        "windsurf": true
-      }
-    }
-  }
-}
-```
-
-### Verify
-
-```bash
-aiswitch current
-# …
-# Cursor    settings.json patched · sk-a...ey12
-# Windsurf  settings.json patched · sk-p...5678
-```
+OS keychain integration (`99designs/keyring`) is on the [roadmap](#roadmap).
 
 ---
 
 ## Contributing
 
-Contributions are welcome! Please open an issue first for large changes.
+Contributions of all kinds are welcome — bug reports, feature requests, documentation improvements, and code.
+
+### First-time setup
 
 ```bash
 git clone https://github.com/anmolnagpal/aiswitch.git
 cd aiswitch
 go mod download
 
-# Activate git hooks — blocks commits that fail lint (run this once after cloning)
+# Install git hooks — blocks commits that fail lint or format checks
 make hooks
-
-make build          # build ./bin/aiswitch
-make fmt            # auto-format all Go files
-make lint           # run golangci-lint
-make run ARGS="--help"
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for commit message format and full workflow.
+### Development workflow
 
-### Roadmap
+```bash
+make build          # build ./aiswitch binary
+make run ARGS="add" # run any command locally
+make fmt            # auto-format all Go files
+make lint           # run golangci-lint
+make build-all      # cross-compile for all platforms
+make hooks-check    # verify hooks are active
+```
 
-- [ ] OS keychain integration for secrets (`99designs/keyring`)
-- [ ] `brew install aiswitch` (Homebrew tap)
-- [ ] More providers: Ollama, Azure OpenAI, Bedrock
+### Commit messages
+
+We follow [Conventional Commits](https://www.conventionalcommits.org/):
+
+```
+feat(openai):   add org_id support
+fix(github):    correct hosts.yml path on Windows
+docs:           improve shell integration examples
+refactor:       extract provider helpers into shared package
+chore:          update dependencies
+ci:             pin golangci-lint to v2
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide, including how to skip a hook in an emergency.
+
+### Good first issues
+
+Look for issues labelled [`good first issue`](https://github.com/anmolnagpal/aiswitch/issues?q=label%3A%22good+first+issue%22) on GitHub — these are intentionally scoped for newcomers.
+
+### Opening a PR
+
+1. Fork the repo and create a branch: `git checkout -b feat/my-feature`
+2. Make your changes, run `make lint` and `make build-all`
+3. Push and open a PR against `main`
+4. A maintainer will review within a few days
+
+---
+
+## Roadmap
+
+Planned features, roughly in priority order:
+
+- [ ] OS keychain integration — store secrets in macOS Keychain / Linux Secret Service / Windows Credential Manager (`99designs/keyring`)
+- [ ] `brew install aiswitch` — Homebrew tap
+- [ ] More providers — Ollama (local models), Azure OpenAI, AWS Bedrock
+- [ ] `aiswitch remove-hook` — clean uninstall of shell integration
+- [ ] Shell completion — `aiswitch use <TAB>` profile names
+
+Have an idea? [Open a discussion](https://github.com/anmolnagpal/aiswitch/discussions) or a feature request issue.
 
 ---
 
 ## Related projects
 
-| Project | Does what |
+| Project | What it does |
 |---|---|
 | [tfswitch](https://github.com/warrensbox/terraform-switcher) | Terraform version switcher — the original inspiration |
-| [nvm](https://github.com/nvm-sh/nvm) | Node.js version switcher — same `.nvmrc` pattern |
-| [gh](https://github.com/cli/cli) | GitHub CLI — aiswitch manages its `hosts.yml` |
+| [nvm](https://github.com/nvm-sh/nvm) | Node.js version switcher — same `.nvmrc` auto-switch pattern |
+| [gh](https://github.com/cli/cli) | GitHub CLI — aiswitch manages its `hosts.yml` for multi-account |
+| [direnv](https://github.com/direnv/direnv) | General-purpose per-directory env vars (complementary) |
 
 ---
 
 ## License
 
 MIT © [Anmol Nagpal](https://github.com/anmolnagpal)
+
+---
+
+<div align="center">
+
+If aiswitch saves you time, please consider giving it a ⭐ — it helps others discover the project.
+
+[Report a bug](https://github.com/anmolnagpal/aiswitch/issues/new?template=bug_report.md) · [Request a feature](https://github.com/anmolnagpal/aiswitch/issues/new?template=feature_request.md) · [Start a discussion](https://github.com/anmolnagpal/aiswitch/discussions)
+
+</div>
