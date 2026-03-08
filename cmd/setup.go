@@ -97,13 +97,16 @@ Run with --dry-run to preview without writing.`,
 		if err != nil {
 			return fmt.Errorf("opening %s: %w", rcPath, err)
 		}
-		defer f.Close()
 
 		// Ensure we start on a fresh line.
 		if existing != "" && !strings.HasSuffix(existing, "\n") {
 			_, _ = fmt.Fprintln(f)
 		}
 		_, _ = fmt.Fprint(f, "\n"+block)
+
+		if err := f.Close(); err != nil {
+			return fmt.Errorf("closing %s: %w", rcPath, err)
+		}
 
 		fmt.Println(ui.StyleSuccess.Render("✓ Shell integration written to " + rcPath))
 		fmt.Println()
