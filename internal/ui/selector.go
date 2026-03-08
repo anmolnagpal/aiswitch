@@ -70,7 +70,7 @@ func (d profileDelegate) Render(w io.Writer, m list.Model, index int, listItem l
 		descTag = StyleHint.Render("  " + item.profile.Description)
 	}
 
-	fmt.Fprintf(w, "%s%s%s%s\n  %s%s",
+	_, _ = fmt.Fprintf(w, "%s%s%s%s\n  %s%s",
 		cursor,
 		activeMark,
 		name,
