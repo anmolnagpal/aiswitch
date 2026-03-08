@@ -104,28 +104,54 @@ Because a child process cannot modify the parent shell's environment, `aiswitch`
 
 It also installs a **`cd` hook** that auto-switches profiles when you enter a directory containing a `.aiswitch` file.
 
-### Bash / Zsh
+### Automatic setup (recommended)
 
-Add to `~/.bashrc` or `~/.zshrc`, then `source` it:
+Run this **once** after installing. It detects your shell and appends the one-liner to the right profile file:
 
 ```bash
-eval "$(aiswitch shell-init)"
+aiswitch setup
 ```
 
-### Fish
+Output:
 
-Add to `~/.config/fish/config.fish`:
+```
+✓ Shell integration written to /Users/you/.zshrc
 
-```fish
-aiswitch shell-init --shell fish | source
+  Activate now without restarting your shell:
+
+    source ~/.zshrc
+
+  Future shells will load it automatically.
 ```
 
-### PowerShell (Windows)
+Options:
 
-Add to `$PROFILE`:
+```bash
+aiswitch setup --shell bash        # target a specific shell
+aiswitch setup --dry-run           # preview without writing
+aiswitch setup --force             # remove old block and re-install
+```
 
-```powershell
-Invoke-Expression (aiswitch shell-init --shell powershell | Out-String)
+### Manual setup
+
+If you prefer to control exactly what goes in your profile, add the one-liner yourself:
+
+| Shell | File | Line to add |
+|---|---|---|
+| **Zsh** | `~/.zshrc` | `eval "$(aiswitch shell-init --shell zsh)"` |
+| **Bash** (Linux) | `~/.bashrc` | `eval "$(aiswitch shell-init --shell bash)"` |
+| **Bash** (macOS) | `~/.bash_profile` | `eval "$(aiswitch shell-init --shell bash)"` |
+| **Fish** | `~/.config/fish/config.fish` | `aiswitch shell-init --shell fish \| source` |
+| **PowerShell** | `$PROFILE` | `Invoke-Expression (aiswitch shell-init --shell powershell \| Out-String)` |
+
+### What the integration does
+
+```bash
+# 1. Wrapper function — env vars apply in the CURRENT session after every switch:
+aiswitch use work   # → runs binary, then sources ~/.aiswitch/env.sh automatically
+
+# 2. cd hook — auto-switches when you enter a project directory:
+cd ~/work-project   # → aiswitch detect runs, reads .aiswitch, applies profile
 ```
 
 ---
@@ -133,14 +159,18 @@ Invoke-Expression (aiswitch shell-init --shell powershell | Out-String)
 ## Quick start
 
 ```bash
-# 1. Add profiles for your accounts
+# 1. Install shell integration (once)
+aiswitch setup          # auto-detects your shell, appends to ~/.zshrc / ~/.bashrc / etc.
+source ~/.zshrc         # activate immediately (or open a new tab)
+
+# 2. Add profiles for your accounts
 aiswitch add            # guided interactive form
 
-# 2. Switch to a profile
+# 3. Switch to a profile
 aiswitch use work       # direct
 aiswitch                # interactive TUI picker
 
-# 3. Verify what's active
+# 4. Verify what's active
 aiswitch current
 ```
 
@@ -221,7 +251,8 @@ aiswitch detect --quiet   # one-line indicator (same as what the hook shows)
 | `aiswitch current` | Show the active profile and live system state |
 | `aiswitch init` | Create a `.aiswitch` file in the current directory |
 | `aiswitch detect [--quiet]` | Find and apply the nearest `.aiswitch` file |
-| `aiswitch shell-init [--shell]` | Print shell integration code |
+| `aiswitch setup [--shell] [--dry-run] [--force]` | Install shell integration into your profile file |
+| `aiswitch shell-init [--shell]` | Print shell integration code (for manual setup) |
 
 ---
 

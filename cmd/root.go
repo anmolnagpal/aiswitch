@@ -64,6 +64,7 @@ func init() {
 	rootCmd.AddCommand(removeCmd)
 	rootCmd.AddCommand(currentCmd)
 	rootCmd.AddCommand(shellInitCmd)
+	rootCmd.AddCommand(setupCmd)
 	rootCmd.AddCommand(useCmd)
 	rootCmd.AddCommand(localInitCmd)
 	rootCmd.AddCommand(detectCmd)
