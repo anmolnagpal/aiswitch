@@ -45,6 +45,13 @@ func Apply(cfg config.GitHubConfig, paths config.EnvPaths) error {
 	return nil
 }
 
+// Clear removes the GitHub env blocks from both shell env files.
+// Called when switching to a profile that has no GitHub config.
+func Clear(paths config.EnvPaths) {
+	_ = merge.ClearBlock(paths.Sh, "# aiswitch:github", "# /aiswitch:github")
+	_ = merge.ClearBlock(paths.PS1, "# aiswitch:github", "# /aiswitch:github")
+}
+
 // Detect returns the currently active GitHub username from the gh CLI, or "".
 func Detect() string {
 	out, err := exec.Command("gh", "auth", "status", "--hostname", "github.com").CombinedOutput()

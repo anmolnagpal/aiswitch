@@ -31,6 +31,13 @@ func Apply(cfg config.GeminiConfig, paths config.EnvPaths) error {
 	return writeConfigFile(cfg.APIKey)
 }
 
+// Clear removes the Gemini env blocks from both shell env files.
+// Called when switching to a profile that has no Gemini config.
+func Clear(paths config.EnvPaths) {
+	_ = merge.ClearBlock(paths.Sh, "# aiswitch:gemini", "# /aiswitch:gemini")
+	_ = merge.ClearBlock(paths.PS1, "# aiswitch:gemini", "# /aiswitch:gemini")
+}
+
 // Detect returns the API key currently in use, or an empty string if unknown.
 func Detect() string {
 	// Check both common env var names.

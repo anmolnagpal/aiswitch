@@ -27,6 +27,13 @@ func Apply(cfg config.OpenAIConfig, paths config.EnvPaths) error {
 	return writeConfigFile(cfg.APIKey)
 }
 
+// Clear removes the OpenAI env blocks from both shell env files.
+// Called when switching to a profile that has no OpenAI config.
+func Clear(paths config.EnvPaths) {
+	_ = merge.ClearBlock(paths.Sh, "# aiswitch:openai", "# /aiswitch:openai")
+	_ = merge.ClearBlock(paths.PS1, "# aiswitch:openai", "# /aiswitch:openai")
+}
+
 // Detect returns the API key currently in use, or an empty string if unknown.
 func Detect() string {
 	if key := os.Getenv("OPENAI_API_KEY"); key != "" {

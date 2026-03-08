@@ -39,3 +39,10 @@ Thumbs.db
 .env.*
 *.pem
 *.key
+
+# ── aiswitch runtime files (never commit these) ───────────────────────────────
+# User data — belongs in ~/.aiswitch/, not in any repo
+.aiswitch/env.sh
+.aiswitch/env.ps1
+.aiswitch/config.json
+.aiswitch/secrets.json

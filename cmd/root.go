@@ -88,31 +88,41 @@ func applyProfile(cfg *config.Config, name string) error {
 		return err
 	}
 
-	// Ensure the directory and both env files exist.
+	// Ensure the directory and env file(s) exist.
 	dir, _ := config.Dir()
 	_ = os.MkdirAll(dir, 0o700)
 	initEnvFile(paths.Sh, "# aiswitch env — source this file or add it to your shell profile\n")
-	initEnvFile(paths.PS1, "# aiswitch env — dot-source this file: . ~/.aiswitch/env.ps1\n")
+	if paths.PS1 != "" {
+		initEnvFile(paths.PS1, "# aiswitch env — dot-source this file: . ~/.aiswitch/env.ps1\n")
+	}
 
 	if profile.Claude != nil {
 		if err := claude.Apply(*profile.Claude, paths); err != nil {
 			return fmt.Errorf("applying Claude config: %w", err)
 		}
+	} else {
+		claude.Clear(paths)
 	}
 	if profile.OpenAI != nil {
 		if err := openai.Apply(*profile.OpenAI, paths); err != nil {
 			return fmt.Errorf("applying OpenAI config: %w", err)
 		}
+	} else {
+		openai.Clear(paths)
 	}
 	if profile.Gemini != nil {
 		if err := gemini.Apply(*profile.Gemini, paths); err != nil {
 			return fmt.Errorf("applying Gemini config: %w", err)
 		}
+	} else {
+		gemini.Clear(paths)
 	}
 	if profile.GitHub != nil {
 		if err := github.Apply(*profile.GitHub, paths); err != nil {
 			return fmt.Errorf("applying GitHub config: %w", err)
 		}
+	} else {
+		github.Clear(paths)
 	}
 	if profile.IDE != nil {
 		if err := ide.Apply(*profile.IDE, profile); err != nil {

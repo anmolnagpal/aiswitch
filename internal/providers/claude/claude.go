@@ -40,6 +40,13 @@ func Apply(cfg config.ClaudeConfig, paths config.EnvPaths) error {
 	return nil
 }
 
+// Clear removes the Claude env blocks from both shell env files.
+// Called when switching to a profile that has no Claude config.
+func Clear(paths config.EnvPaths) {
+	_ = merge.ClearBlock(paths.Sh, "# aiswitch:claude", "# /aiswitch:claude")
+	_ = merge.ClearBlock(paths.PS1, "# aiswitch:claude", "# /aiswitch:claude")
+}
+
 // Detect returns the API key currently in use, or an empty string if unknown.
 func Detect() string {
 	if key := os.Getenv("ANTHROPIC_API_KEY"); key != "" {

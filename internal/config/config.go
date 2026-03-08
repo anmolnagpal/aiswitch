@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 )
 
 const (
@@ -59,20 +60,27 @@ func EnvPS1Path() (string, error) {
 	return filepath.Join(dir, EnvPS1File), nil
 }
 
-// GetEnvPaths returns both env file paths.
+// GetEnvPaths returns the env file paths for the current OS.
+// PS1 is only populated on Windows; it is empty on macOS and Linux.
 func GetEnvPaths() (EnvPaths, error) {
 	sh, err := EnvShellPath()
 	if err != nil {
 		return EnvPaths{}, err
 	}
-	ps1, err := EnvPS1Path()
-	if err != nil {
-		return EnvPaths{}, err
+	var ps1 string
+	if runtime.GOOS == "windows" {
+		ps1, err = EnvPS1Path()
+		if err != nil {
+			return EnvPaths{}, err
+		}
 	}
 	return EnvPaths{Sh: sh, PS1: ps1}, nil
 }
 
-// Load reads the config file. If it does not exist an empty Config is returned.
+// Load reads the config and secrets files.
+// If config.json does not exist an empty Config is returned.
+// Secrets from secrets.json are merged in (and take precedence over any
+// legacy plaintext api_key values still present in config.json).
 func Load() (*Config, error) {
 	path, err := Path()
 	if err != nil {
@@ -94,10 +102,20 @@ func Load() (*Config, error) {
 	if cfg.Profiles == nil {
 		cfg.Profiles = map[string]Profile{}
 	}
+
+	// Merge secrets from the separate secrets file.
+	s, err := loadSecrets()
+	if err != nil {
+		return nil, err
+	}
+	mergeSecrets(&cfg, s)
+
 	return &cfg, nil
 }
 
-// Save writes the config file, creating the directory if needed.
+// Save writes config.json (no secrets) and secrets.json (credentials only).
+// Any existing plaintext api_key/token values in cfg are automatically
+// migrated to secrets.json and removed from config.json.
 func Save(cfg *Config) error {
 	dir, err := Dir()
 	if err != nil {
@@ -107,14 +125,24 @@ func Save(cfg *Config) error {
 		return fmt.Errorf("creating config dir: %w", err)
 	}
 
+	// Extract secrets before marshalling — this zeroes the key fields in cfg.
+	s := extractSecrets(cfg)
+	if err := saveSecrets(s); err != nil {
+		return err
+	}
+
+	// cfg.Profiles now has empty api_key/token fields — safe to write.
 	data, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
 		return fmt.Errorf("encoding config: %w", err)
 	}
-
 	path := filepath.Join(dir, configFileName)
 	if err := os.WriteFile(path, data, 0o600); err != nil {
 		return fmt.Errorf("writing config: %w", err)
 	}
+
+	// Restore the zeroed fields so the in-memory cfg remains usable after Save.
+	mergeSecrets(cfg, s)
+
 	return nil
 }

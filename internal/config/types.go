@@ -20,14 +20,14 @@ type Profile struct {
 
 // ClaudeConfig holds Anthropic / Claude credentials.
 type ClaudeConfig struct {
-	APIKey       string `json:"api_key"`
+	APIKey       string `json:"api_key,omitempty"`
 	DefaultModel string `json:"default_model,omitempty"`
 }
 
 // GitHubConfig holds GitHub credentials used by Copilot and the gh CLI.
 type GitHubConfig struct {
-	Token    string `json:"token"`
-	Username string `json:"username"`
+	Token    string `json:"token,omitempty"`
+	Username string `json:"username,omitempty"`
 	Email    string `json:"email,omitempty"`
 }
 
@@ -44,7 +44,7 @@ type IDEConfig struct {
 
 // OpenAIConfig holds OpenAI credentials.
 type OpenAIConfig struct {
-	APIKey string `json:"api_key"`
+	APIKey string `json:"api_key,omitempty"`
 	// OrgID is the OpenAI organisation ID (optional).
 	OrgID        string `json:"org_id,omitempty"`
 	DefaultModel string `json:"default_model,omitempty"`
@@ -52,7 +52,7 @@ type OpenAIConfig struct {
 
 // GeminiConfig holds Google Gemini / Google AI credentials.
 type GeminiConfig struct {
-	APIKey string `json:"api_key"`
+	APIKey string `json:"api_key,omitempty"`
 	// ProjectID is used for Vertex AI (optional; leave blank for AI Studio).
 	ProjectID    string `json:"project_id,omitempty"`
 	DefaultModel string `json:"default_model,omitempty"`
