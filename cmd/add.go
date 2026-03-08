@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/anmolnagpal/aiswitch/internal/config"
+	"github.com/anmolnagpal/aiswitch/internal/providers/ide"
 	"github.com/anmolnagpal/aiswitch/internal/ui"
 )
 
@@ -25,6 +26,7 @@ var addCmd = &cobra.Command{
 			profileName string
 			description string
 			services    []string // "claude" | "openai" | "gemini" | "github"
+			ides        []string // "cursor" | "windsurf"
 
 			claudeAPIKey string
 			claudeModel  string
@@ -69,10 +71,33 @@ var addCmd = &cobra.Command{
 					ghUsername = existing.GitHub.Username
 					ghEmail = existing.GitHub.Email
 				}
+				if existing.IDE != nil {
+					if existing.IDE.Cursor {
+						ides = append(ides, "cursor")
+					}
+					if existing.IDE.Windsurf {
+						ides = append(ides, "windsurf")
+					}
+				}
 			}
 		}
 
-		// ── Step 1: name, description, service selection ──────────────────────
+		// ── Step 1: name, description, service + IDE selection ───────────────
+		// Build IDE options — hint which ones are already installed.
+		installedIDEs := ide.InstalledIDEs()
+		installedSet := make(map[string]bool, len(installedIDEs))
+		for _, n := range installedIDEs {
+			installedSet[strings.ToLower(n)] = true
+		}
+		cursorLabel := "Cursor IDE"
+		if installedSet["cursor"] {
+			cursorLabel += "  ✓ installed"
+		}
+		windsurfLabel := "Windsurf IDE"
+		if installedSet["windsurf"] {
+			windsurfLabel += "  ✓ installed"
+		}
+
 		nameForm := huh.NewForm(
 			huh.NewGroup(
 				huh.NewInput().
@@ -108,6 +133,15 @@ var addCmd = &cobra.Command{
 						}
 						return nil
 					}),
+
+				huh.NewMultiSelect[string]().
+					Title("Patch IDE settings.json with API keys?").
+					Description("Keys are written on every profile switch — no restart needed.").
+					Options(
+						huh.NewOption(cursorLabel, "cursor"),
+						huh.NewOption(windsurfLabel, "windsurf"),
+					).
+					Value(&ides),
 			),
 		)
 		if err := nameForm.Run(); err != nil {
@@ -119,6 +153,8 @@ var addCmd = &cobra.Command{
 		wantOpenAI := contains(services, "openai")
 		wantGemini := contains(services, "gemini")
 		wantGitHub := contains(services, "github")
+		wantCursor := contains(ides, "cursor")
+		wantWindsurf := contains(ides, "windsurf")
 
 		// ── Step 2: Claude ────────────────────────────────────────────────────
 		if wantClaude {
@@ -288,6 +324,13 @@ var addCmd = &cobra.Command{
 				Token:    strings.TrimSpace(ghToken),
 				Username: strings.TrimSpace(ghUsername),
 				Email:    strings.TrimSpace(ghEmail),
+			}
+		}
+
+		if wantCursor || wantWindsurf {
+			profile.IDE = &config.IDEConfig{
+				Cursor:   wantCursor,
+				Windsurf: wantWindsurf,
 			}
 		}
 

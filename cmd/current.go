@@ -9,6 +9,7 @@ import (
 	"github.com/anmolnagpal/aiswitch/internal/providers/claude"
 	"github.com/anmolnagpal/aiswitch/internal/providers/gemini"
 	"github.com/anmolnagpal/aiswitch/internal/providers/github"
+	"github.com/anmolnagpal/aiswitch/internal/providers/ide"
 	"github.com/anmolnagpal/aiswitch/internal/providers/openai"
 	"github.com/anmolnagpal/aiswitch/internal/ui"
 )
@@ -77,6 +78,16 @@ var currentCmd = &cobra.Command{
 			fmt.Println("  " + ui.StyleServiceBadge.Render("GitHub") + "  " + ui.StyleMuted.Render("not detected"))
 		}
 
+		for _, ideName := range []string{"Cursor", "Windsurf"} {
+			status := ide.DetectIDE(ideName)
+			badge := ui.StyleServiceBadge.Render(ideName)
+			if status != "" {
+				fmt.Println("  " + badge + "  " + ui.StyleMuted.Render("settings.json patched · ") + status)
+			} else {
+				fmt.Println("  " + badge + "  " + ui.StyleMuted.Render("not installed or not yet patched"))
+			}
+		}
+
 		fmt.Println()
 		return nil
 	},
@@ -123,6 +134,17 @@ func printProfileDetail(p config.Profile) {
 			fmt.Println(ui.StyleMuted.Render("    Email     ") + p.GitHub.Email)
 		}
 		fmt.Println(ui.StyleMuted.Render("    Token     ") + maskSecret(p.GitHub.Token))
+		fmt.Println()
+	}
+
+	if p.IDE != nil {
+		fmt.Println("  " + ui.StyleServiceBadge.Render("IDE patching"))
+		if p.IDE.Cursor {
+			fmt.Println(ui.StyleMuted.Render("    Cursor    ") + "enabled")
+		}
+		if p.IDE.Windsurf {
+			fmt.Println(ui.StyleMuted.Render("    Windsurf  ") + "enabled")
+		}
 		fmt.Println()
 	}
 

@@ -11,6 +11,7 @@ import (
 	"github.com/anmolnagpal/aiswitch/internal/providers/claude"
 	"github.com/anmolnagpal/aiswitch/internal/providers/gemini"
 	"github.com/anmolnagpal/aiswitch/internal/providers/github"
+	"github.com/anmolnagpal/aiswitch/internal/providers/ide"
 	"github.com/anmolnagpal/aiswitch/internal/providers/openai"
 	"github.com/anmolnagpal/aiswitch/internal/ui"
 )
@@ -104,6 +105,11 @@ func applyProfile(cfg *config.Config, name string) error {
 	if profile.GitHub != nil {
 		if err := github.Apply(*profile.GitHub, paths); err != nil {
 			return fmt.Errorf("applying GitHub config: %w", err)
+		}
+	}
+	if profile.IDE != nil {
+		if err := ide.Apply(*profile.IDE, profile); err != nil {
+			return fmt.Errorf("applying IDE config: %w", err)
 		}
 	}
 

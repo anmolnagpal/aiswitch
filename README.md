@@ -2,7 +2,8 @@
 
 <h1>⚡ aiswitch</h1>
 
-<p><strong>Switch between Claude, OpenAI, Gemini, and GitHub Copilot accounts in one command.</strong><br/>
+<p><strong>Switch between Claude, OpenAI, Gemini, and GitHub Copilot accounts in one command.<br/>
+Works with Cursor, Windsurf, and any terminal tool.</strong><br/>
 Like <a href="https://github.com/warrensbox/terraform-switcher">tfswitch</a>, but for AI.</p>
 
 [![CI](https://github.com/anmolnagpal/aiswitch/actions/workflows/ci.yml/badge.svg)](https://github.com/anmolnagpal/aiswitch/actions/workflows/ci.yml)
@@ -21,8 +22,8 @@ $ aiswitch
 
   Switch AI Profile
 
-  ▶ ● work          Claude + OpenAI + GitHub    (active)
-    ○ personal      Claude + Gemini + GitHub
+  ▶ ● work          Claude + OpenAI + GitHub + Cursor/Windsurf   (active)
+    ○ personal      Claude + Gemini + GitHub + Cursor
     ○ client-x      OpenAI only
     ○ open-source   GitHub only
 
@@ -36,7 +37,8 @@ $ aiswitch
 Most developers juggle **multiple AI accounts** — a work Anthropic account on a premium plan, a personal Claude account, an OpenAI key for GPT-4o, a Gemini key for AI Studio experiments, and two or three GitHub accounts each with a different Copilot subscription. Switching between them today means:
 
 - Manually editing `~/.bashrc` to swap `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY` …
-- Running `gh auth switch` and hoping VS Code picks it up
+- Running `gh auth switch` and hoping VS Code / Cursor / Windsurf picks it up
+- Digging into **Cursor → Settings → Models** or **Windsurf Preferences** to re-enter keys by hand
 - Forgetting which account is active mid-session and burning API quota on the wrong key
 
 **aiswitch** solves this the same way `tfswitch` solved Terraform versions and `nvm` solved Node versions: one command to switch, a `.aiswitch` file in each project to make it automatic.
@@ -53,6 +55,8 @@ Most developers juggle **multiple AI accounts** — a work Anthropic account on 
 - **OpenAI** — sets `OPENAI_API_KEY`, `OPENAI_ORG_ID`, `OPENAI_MODEL`, writes `~/.config/openai/api_key`
 - **Gemini** — sets `GEMINI_API_KEY`, `GOOGLE_API_KEY`, `GEMINI_MODEL`, `GOOGLE_CLOUD_PROJECT`, writes `~/.config/gemini/api_key`
 - **GitHub Copilot** — updates `~/.config/gh/hosts.yml`, sets `GITHUB_TOKEN` / `GH_TOKEN`, optionally updates `git config user.email`
+- **Cursor IDE** — patches `settings.json` with `anthropic.apiKey`, `openai.apiKey`, `googleGenerativeAI.apiKey` — no restart needed
+- **Windsurf IDE** — same `settings.json` patching for Windsurf (Codeium)
 - **Cross-platform** — macOS (Intel + Apple Silicon), Linux (amd64 + arm64), Windows (amd64)
 - **Zero runtime deps** — single self-contained binary, ~5 MB
 
@@ -282,6 +286,70 @@ After switching, VS Code Copilot picks up the new token on the next window launc
 
 ---
 
+## IDE integration
+
+aiswitch can patch the `settings.json` of **Cursor** and **Windsurf** on every profile switch, so the IDE's built-in AI features automatically use the right API keys without any manual reconfiguration.
+
+### How it works
+
+When you enable an IDE in your profile, aiswitch writes these keys into the IDE's `settings.json`:
+
+| Provider | Setting key written |
+|---|---|
+| Claude | `anthropic.apiKey`, `anthropic.defaultModel` |
+| OpenAI | `openai.apiKey`, `openai.organization`, `openai.defaultModel` |
+| Gemini | `googleGenerativeAI.apiKey`, `googleGenerativeAI.defaultModel` |
+
+All other existing settings are preserved. The IDE does **not** need to be restarted — VS Code-based editors hot-reload `settings.json`.
+
+### Settings file locations
+
+| IDE | macOS | Linux | Windows |
+|---|---|---|---|
+| Cursor | `~/Library/Application Support/Cursor/User/settings.json` | `~/.config/Cursor/User/settings.json` | `%APPDATA%\Cursor\User\settings.json` |
+| Windsurf | `~/Library/Application Support/Windsurf/User/settings.json` | `~/.config/Windsurf/User/settings.json` | `%APPDATA%\Windsurf\User\settings.json` |
+
+### Enable during `aiswitch add`
+
+The `add` wizard automatically detects installed IDEs (marked **✓ installed**) and presents them as a multi-select:
+
+```
+? Patch IDE settings.json with API keys?
+  [x] Cursor IDE  ✓ installed
+  [ ] Windsurf IDE
+```
+
+### Enable manually
+
+Edit `~/.aiswitch/config.json` and add an `ide` block to any profile:
+
+```json
+{
+  "active_profile": "work",
+  "profiles": {
+    "work": {
+      "claude": { "api_key": "sk-ant-..." },
+      "openai": { "api_key": "sk-proj-..." },
+      "ide": {
+        "cursor": true,
+        "windsurf": true
+      }
+    }
+  }
+}
+```
+
+### Verify
+
+```bash
+aiswitch current
+# …
+# Cursor    settings.json patched · sk-a...ey12
+# Windsurf  settings.json patched · sk-p...5678
+```
+
+---
+
 ## Contributing
 
 Contributions are welcome! Please open an issue first for large changes.
@@ -306,8 +374,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for commit message format and full workfl
 
 - [ ] OS keychain integration for secrets (`99designs/keyring`)
 - [ ] `brew install aiswitch` (Homebrew tap)
-- [ ] Support for Cursor IDE, Windsurf, and other AI-first editors
-- [ ] More providers: OpenAI, Gemini, Ollama
+- [ ] More providers: Ollama, Azure OpenAI, Bedrock
 
 ---
 
