@@ -3,6 +3,7 @@ package merge
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -104,6 +105,10 @@ func TestIntoFile_MultipleProviderBlocks(t *testing.T) {
 }
 
 func TestIntoFile_FilePermissions(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows does not enforce Unix-style file permission bits")
+	}
+
 	dir := t.TempDir()
 	path := filepath.Join(dir, "env.sh")
 

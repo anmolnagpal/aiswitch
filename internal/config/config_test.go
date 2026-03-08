@@ -3,15 +3,18 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
 // overrideHome redirects os.UserHomeDir to a temp directory for the duration
-// of the test by pointing $HOME to a temp dir.
+// of the test. It sets both HOME (Unix) and USERPROFILE (Windows) so that
+// os.UserHomeDir() returns the temp dir on all platforms.
 func overrideHome(t *testing.T) string {
 	t.Helper()
 	dir := t.TempDir()
 	t.Setenv("HOME", dir)
+	t.Setenv("USERPROFILE", dir) // Windows
 	return dir
 }
 
@@ -117,12 +120,19 @@ func TestSave_CreatesDirectory(t *testing.T) {
 	if !info.IsDir() {
 		t.Error("expected a directory")
 	}
-	if info.Mode().Perm() != 0o700 {
-		t.Errorf("directory permissions: got %04o, want 0700", info.Mode().Perm())
+	// Windows does not enforce Unix-style permission bits.
+	if runtime.GOOS != "windows" {
+		if info.Mode().Perm() != 0o700 {
+			t.Errorf("directory permissions: got %04o, want 0700", info.Mode().Perm())
+		}
 	}
 }
 
 func TestSave_FilePermissions(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("Windows does not enforce Unix-style file permission bits")
+	}
+
 	overrideHome(t)
 
 	cfg := &Config{Profiles: map[string]Profile{}}

@@ -103,7 +103,7 @@ func TestRead_YAML_MissingProfile(t *testing.T) {
 
 func TestRead_YAML_TypoInKey(t *testing.T) {
 	dir := t.TempDir()
-	// 'profle' is a typo — profile field should be empty → error
+	// 'profle' is a typo — profile field will be empty → error
 	path := writeFile(t, dir, FileName, "profle: work\n")
 
 	_, err := Read(path)
@@ -145,11 +145,26 @@ func TestFind_InParentDir(t *testing.T) {
 	}
 }
 
-func TestFind_NotFound(t *testing.T) {
+func TestFind_NotInTempDir(t *testing.T) {
+	// Create a deeply nested temp dir with no .aiswitch anywhere inside it.
+	// We can only check that the result, if any, is NOT within our temp tree —
+	// since Find walks all the way to the filesystem root, it may legitimately
+	// find a .aiswitch belonging to the CI environment further up the tree.
 	dir := t.TempDir()
-	got := Find(dir)
+	nested := filepath.Join(dir, "a", "b", "c")
+	if err := os.MkdirAll(nested, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	got := Find(nested)
+	// If something was found it must NOT be inside our temp tree (which has no
+	// .aiswitch files), proving that Find does not generate false positives
+	// within a clean directory tree.
 	if got != "" {
-		t.Errorf("Find() = %q, want empty string", got)
+		rel, err := filepath.Rel(dir, got)
+		if err == nil && len(rel) > 0 && rel[0] != '.' {
+			t.Errorf("Find() returned a path inside the temp dir that has no .aiswitch: %q", got)
+		}
 	}
 }
 
