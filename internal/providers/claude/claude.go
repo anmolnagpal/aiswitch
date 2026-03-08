@@ -15,6 +15,7 @@ import (
 	"runtime"
 
 	"github.com/anmolnagpal/aiswitch/internal/config"
+	"github.com/anmolnagpal/aiswitch/internal/providers/merge"
 )
 
 // Apply writes all Claude-related credential files for the given config.
@@ -62,7 +63,7 @@ func writeShFragment(cfg config.ClaudeConfig, path string) error {
 	if cfg.DefaultModel != "" {
 		block += fmt.Sprintf("export ANTHROPIC_MODEL=%q\n", cfg.DefaultModel)
 	}
-	return mergeIntoFile(path, "# aiswitch:claude", "# /aiswitch:claude", block,
+	return merge.IntoFile(path, "# aiswitch:claude", "# /aiswitch:claude", block,
 		"# aiswitch env — source this file or add it to your shell profile\n")
 }
 
@@ -73,7 +74,7 @@ func writePS1Fragment(cfg config.ClaudeConfig, path string) error {
 	if cfg.DefaultModel != "" {
 		block += fmt.Sprintf("$env:ANTHROPIC_MODEL = %q\n", cfg.DefaultModel)
 	}
-	return mergeIntoFile(path, "# aiswitch:claude", "# /aiswitch:claude", block,
+	return merge.IntoFile(path, "# aiswitch:claude", "# /aiswitch:claude", block,
 		"# aiswitch env — dot-source this file: . ~/.aiswitch/env.ps1\n")
 }
 
@@ -133,52 +134,4 @@ func claudeCredentialsPath(home string) string {
 		}
 	}
 	return filepath.Join(home, ".claude", ".credentials.json")
-}
-
-// ─── shared env file helpers ──────────────────────────────────────────────────
-
-func readFile(path string) string {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return ""
-	}
-	return string(data)
-}
-
-// mergeIntoFile replaces the region between startMarker/endMarker in path
-// with block, or appends a new region if the markers are absent.
-func mergeIntoFile(path, startMarker, endMarker, block, header string) error {
-	existing := readFile(path)
-	if existing == "" {
-		existing = header
-	}
-	start := startMarker + "\n"
-	startIdx := indexOf(existing, start)
-	endIdx := indexOf(existing, endMarker)
-
-	var result string
-	if startIdx == -1 || endIdx == -1 {
-		sep := ""
-		if len(existing) > 0 && existing[len(existing)-1] != '\n' {
-			sep = "\n"
-		}
-		result = existing + sep + start + block + endMarker + "\n"
-	} else {
-		before := existing[:startIdx]
-		after := existing[endIdx+len(endMarker):]
-		if len(after) > 0 && after[0] == '\n' {
-			after = after[1:]
-		}
-		result = before + start + block + endMarker + "\n" + after
-	}
-	return os.WriteFile(path, []byte(result), 0o600)
-}
-
-func indexOf(s, sub string) int {
-	for i := 0; i <= len(s)-len(sub); i++ {
-		if s[i:i+len(sub)] == sub {
-			return i
-		}
-	}
-	return -1
 }

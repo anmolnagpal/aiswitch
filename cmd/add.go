@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/charmbracelet/huh"
@@ -11,6 +12,8 @@ import (
 	"github.com/anmolnagpal/aiswitch/internal/providers/ide"
 	"github.com/anmolnagpal/aiswitch/internal/ui"
 )
+
+var validProfileName = regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)
 
 var addCmd = &cobra.Command{
 	Use:   "add [name]",
@@ -106,8 +109,12 @@ var addCmd = &cobra.Command{
 					Placeholder("work").
 					Value(&profileName).
 					Validate(func(s string) error {
-						if strings.TrimSpace(s) == "" {
+						s = strings.TrimSpace(s)
+						if s == "" {
 							return fmt.Errorf("name cannot be empty")
+						}
+						if !validProfileName.MatchString(s) {
+							return fmt.Errorf("name must contain only letters, digits, hyphens, or underscores")
 						}
 						return nil
 					}),

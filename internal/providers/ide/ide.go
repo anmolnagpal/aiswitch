@@ -21,6 +21,7 @@ import (
 	"runtime"
 
 	"github.com/anmolnagpal/aiswitch/internal/config"
+	"github.com/anmolnagpal/aiswitch/internal/ui"
 )
 
 // Apply patches each enabled IDE's settings.json with the API keys held in
@@ -76,17 +77,10 @@ func DetectIDE(ideName string) string {
 	// Check for any key we manage as evidence this IDE has been patched.
 	for _, key := range []string{"anthropic.apiKey", "openai.apiKey", "googleGenerativeAI.apiKey"} {
 		if v, ok := settings[key].(string); ok && v != "" {
-			return maskSecret(v)
+			return ui.MaskSecret(v)
 		}
 	}
 	return ""
-}
-
-func maskSecret(s string) string {
-	if len(s) <= 8 {
-		return "****"
-	}
-	return s[:4] + "..." + s[len(s)-4:]
 }
 
 // ─── internal ─────────────────────────────────────────────────────────────────

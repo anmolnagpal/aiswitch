@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 	"sort"
-	"strings"
 
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/lipgloss/table"
@@ -45,9 +44,7 @@ var listCmd = &cobra.Command{
 
 			claudeInfo := ui.StyleMuted.Render("—")
 			if p.Claude != nil {
-				key := p.Claude.APIKey
-				masked := maskSecret(key)
-				claudeInfo = masked
+				claudeInfo = ui.MaskSecret(p.Claude.APIKey)
 				if p.Claude.DefaultModel != "" {
 					claudeInfo += ui.StyleMuted.Render("  " + p.Claude.DefaultModel)
 				}
@@ -92,13 +89,4 @@ var listCmd = &cobra.Command{
 		fmt.Println(ui.StyleHint.Render("  " + fmt.Sprintf("%d profile(s)  •  aiswitch add  •  aiswitch use <profile>", len(names))))
 		return nil
 	},
-}
-
-// maskSecret returns a masked version: first 8 chars visible + "..." + last 4.
-func maskSecret(s string) string {
-	s = strings.TrimSpace(s)
-	if len(s) <= 12 {
-		return strings.Repeat("*", len(s))
-	}
-	return s[:8] + "..." + s[len(s)-4:]
 }

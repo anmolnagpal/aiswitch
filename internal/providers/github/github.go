@@ -6,6 +6,9 @@
 //  2. Patch ~/.config/gh/hosts.yml (Linux/macOS) or
 //     %APPDATA%\GitHub CLI\hosts.yml (Windows) to set the active user.
 //  3. Optionally update the global git config user.name/email.
+//
+// Note: git identity changes use --global and therefore affect all repositories
+// on this machine, not just the current one.
 package github
 
 import (
@@ -19,6 +22,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/anmolnagpal/aiswitch/internal/config"
+	"github.com/anmolnagpal/aiswitch/internal/providers/merge"
 )
 
 // Apply writes all GitHub-related credential files for the given config.
@@ -33,7 +37,10 @@ func Apply(cfg config.GitHubConfig, paths config.EnvPaths) error {
 		return fmt.Errorf("patching gh hosts: %w", err)
 	}
 	if cfg.Username != "" || cfg.Email != "" {
-		_ = setGitIdentity(cfg.Username, cfg.Email)
+		if err := setGitIdentity(cfg.Username, cfg.Email); err != nil {
+			// Non-fatal: git may not be installed or config may be read-only.
+			fmt.Fprintf(os.Stderr, "aiswitch: warning: updating global git identity: %v\n", err)
+		}
 	}
 	return nil
 }
@@ -134,7 +141,7 @@ func writeShFragment(cfg config.GitHubConfig, path string) error {
 	if cfg.Username != "" {
 		block += fmt.Sprintf("export GITHUB_USER=%q\n", cfg.Username)
 	}
-	return mergeIntoFile(path, "# aiswitch:github", "# /aiswitch:github", block,
+	return merge.IntoFile(path, "# aiswitch:github", "# /aiswitch:github", block,
 		"# aiswitch env — source this file or add it to your shell profile\n")
 }
 
@@ -146,12 +153,14 @@ func writePS1Fragment(cfg config.GitHubConfig, path string) error {
 	if cfg.Username != "" {
 		block += fmt.Sprintf("$env:GITHUB_USER = %q\n", cfg.Username)
 	}
-	return mergeIntoFile(path, "# aiswitch:github", "# /aiswitch:github", block,
+	return merge.IntoFile(path, "# aiswitch:github", "# /aiswitch:github", block,
 		"# aiswitch env — dot-source this file: . ~/.aiswitch/env.ps1\n")
 }
 
 // ─── git identity ─────────────────────────────────────────────────────────────
 
+// setGitIdentity updates the global git user.name and user.email.
+// This affects all repositories on the machine — not just the current one.
 func setGitIdentity(name, email string) error {
 	if name != "" {
 		if err := exec.Command("git", "config", "--global", "user.name", name).Run(); err != nil {
@@ -162,50 +171,4 @@ func setGitIdentity(name, email string) error {
 		return exec.Command("git", "config", "--global", "user.email", email).Run()
 	}
 	return nil
-}
-
-// ─── shared env file helpers ──────────────────────────────────────────────────
-
-func readFile(path string) string {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return ""
-	}
-	return string(data)
-}
-
-func mergeIntoFile(path, startMarker, endMarker, block, header string) error {
-	existing := readFile(path)
-	if existing == "" {
-		existing = header
-	}
-	start := startMarker + "\n"
-	startIdx := indexOf(existing, start)
-	endIdx := indexOf(existing, endMarker)
-
-	var result string
-	if startIdx == -1 || endIdx == -1 {
-		sep := ""
-		if len(existing) > 0 && existing[len(existing)-1] != '\n' {
-			sep = "\n"
-		}
-		result = existing + sep + start + block + endMarker + "\n"
-	} else {
-		before := existing[:startIdx]
-		after := existing[endIdx+len(endMarker):]
-		if len(after) > 0 && after[0] == '\n' {
-			after = after[1:]
-		}
-		result = before + start + block + endMarker + "\n" + after
-	}
-	return os.WriteFile(path, []byte(result), 0o600)
-}
-
-func indexOf(s, sub string) int {
-	for i := 0; i <= len(s)-len(sub); i++ {
-		if s[i:i+len(sub)] == sub {
-			return i
-		}
-	}
-	return -1
 }

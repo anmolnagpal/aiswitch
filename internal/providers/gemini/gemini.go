@@ -17,6 +17,7 @@ import (
 	"runtime"
 
 	"github.com/anmolnagpal/aiswitch/internal/config"
+	"github.com/anmolnagpal/aiswitch/internal/providers/merge"
 )
 
 // Apply writes all Gemini-related credential files for the given config.
@@ -61,7 +62,7 @@ func writeShFragment(cfg config.GeminiConfig, path string) error {
 	if cfg.ProjectID != "" {
 		block += fmt.Sprintf("export GOOGLE_CLOUD_PROJECT=%q\n", cfg.ProjectID)
 	}
-	return mergeIntoFile(path, "# aiswitch:gemini", "# /aiswitch:gemini", block,
+	return merge.IntoFile(path, "# aiswitch:gemini", "# /aiswitch:gemini", block,
 		"# aiswitch env — source this file or add it to your shell profile\n")
 }
 
@@ -76,7 +77,7 @@ func writePS1Fragment(cfg config.GeminiConfig, path string) error {
 	if cfg.ProjectID != "" {
 		block += fmt.Sprintf("$env:GOOGLE_CLOUD_PROJECT = %q\n", cfg.ProjectID)
 	}
-	return mergeIntoFile(path, "# aiswitch:gemini", "# /aiswitch:gemini", block,
+	return merge.IntoFile(path, "# aiswitch:gemini", "# /aiswitch:gemini", block,
 		"# aiswitch env — dot-source this file: . ~/.aiswitch/env.ps1\n")
 }
 
@@ -106,50 +107,4 @@ func writeConfigFile(apiKey string) error {
 		return err
 	}
 	return os.WriteFile(p, []byte(apiKey), 0o600)
-}
-
-// ─── shared helpers ───────────────────────────────────────────────────────────
-
-func readFile(path string) string {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return ""
-	}
-	return string(data)
-}
-
-func mergeIntoFile(path, startMarker, endMarker, block, header string) error {
-	existing := readFile(path)
-	if existing == "" {
-		existing = header
-	}
-	start := startMarker + "\n"
-	startIdx := indexOf(existing, start)
-	endIdx := indexOf(existing, endMarker)
-
-	var result string
-	if startIdx == -1 || endIdx == -1 {
-		sep := ""
-		if len(existing) > 0 && existing[len(existing)-1] != '\n' {
-			sep = "\n"
-		}
-		result = existing + sep + start + block + endMarker + "\n"
-	} else {
-		before := existing[:startIdx]
-		after := existing[endIdx+len(endMarker):]
-		if len(after) > 0 && after[0] == '\n' {
-			after = after[1:]
-		}
-		result = before + start + block + endMarker + "\n" + after
-	}
-	return os.WriteFile(path, []byte(result), 0o600)
-}
-
-func indexOf(s, sub string) int {
-	for i := 0; i <= len(s)-len(sub); i++ {
-		if s[i:i+len(sub)] == sub {
-			return i
-		}
-	}
-	return -1
 }

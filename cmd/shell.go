@@ -60,7 +60,10 @@ func init() {
 		"Shell to target: auto, bash, zsh, fish, powershell")
 }
 
-// detectShell guesses the running shell from $SHELL (Unix) or OS (Windows).
+// detectShell guesses the running shell.
+// It first checks $SHELL (set by most Unix login shells), then falls back to
+// well-known env vars that each shell exports ($ZSH_VERSION, $FISH_VERSION).
+// On Windows it always returns "powershell".
 func detectShell() string {
 	if runtime.GOOS == "windows" {
 		return "powershell"
@@ -71,9 +74,17 @@ func detectShell() string {
 		return "fish"
 	case strings.Contains(shellPath, "zsh"):
 		return "zsh"
-	default:
+	case shellPath != "":
 		return "bash"
 	}
+	// $SHELL not set — try shell-specific env vars as a fallback.
+	if os.Getenv("ZSH_VERSION") != "" {
+		return "zsh"
+	}
+	if os.Getenv("FISH_VERSION") != "" {
+		return "fish"
+	}
+	return "bash"
 }
 
 // ─── Bash ────────────────────────────────────────────────────────────────────

@@ -52,21 +52,21 @@ var currentCmd = &cobra.Command{
 
 		claudeKey := claude.Detect()
 		if claudeKey != "" {
-			fmt.Println("  " + ui.StyleServiceBadge.Render("Claude") + "  " + maskSecret(claudeKey))
+			fmt.Println("  " + ui.StyleServiceBadge.Render("Claude") + "  " + ui.MaskSecret(claudeKey))
 		} else {
 			fmt.Println("  " + ui.StyleServiceBadge.Render("Claude") + "  " + ui.StyleMuted.Render("not detected"))
 		}
 
 		openAIKey := openai.Detect()
 		if openAIKey != "" {
-			fmt.Println("  " + ui.StyleServiceBadge.Render("OpenAI") + "  " + maskSecret(openAIKey))
+			fmt.Println("  " + ui.StyleServiceBadge.Render("OpenAI") + "  " + ui.MaskSecret(openAIKey))
 		} else {
 			fmt.Println("  " + ui.StyleServiceBadge.Render("OpenAI") + "  " + ui.StyleMuted.Render("not detected"))
 		}
 
 		geminiKey := gemini.Detect()
 		if geminiKey != "" {
-			fmt.Println("  " + ui.StyleServiceBadge.Render("Gemini") + "  " + maskSecret(geminiKey))
+			fmt.Println("  " + ui.StyleServiceBadge.Render("Gemini") + "  " + ui.MaskSecret(geminiKey))
 		} else {
 			fmt.Println("  " + ui.StyleServiceBadge.Render("Gemini") + "  " + ui.StyleMuted.Render("not detected"))
 		}
@@ -96,7 +96,7 @@ var currentCmd = &cobra.Command{
 func printProfileDetail(p config.Profile) {
 	if p.Claude != nil {
 		fmt.Println("  " + ui.StyleServiceBadge.Render("Claude"))
-		fmt.Println(ui.StyleMuted.Render("    API Key  ") + maskSecret(p.Claude.APIKey))
+		fmt.Println(ui.StyleMuted.Render("    API Key  ") + ui.MaskSecret(p.Claude.APIKey))
 		if p.Claude.DefaultModel != "" {
 			fmt.Println(ui.StyleMuted.Render("    Model    ") + p.Claude.DefaultModel)
 		}
@@ -105,7 +105,7 @@ func printProfileDetail(p config.Profile) {
 
 	if p.OpenAI != nil {
 		fmt.Println("  " + ui.StyleServiceBadge.Render("OpenAI"))
-		fmt.Println(ui.StyleMuted.Render("    API Key  ") + maskSecret(p.OpenAI.APIKey))
+		fmt.Println(ui.StyleMuted.Render("    API Key  ") + ui.MaskSecret(p.OpenAI.APIKey))
 		if p.OpenAI.OrgID != "" {
 			fmt.Println(ui.StyleMuted.Render("    Org ID   ") + p.OpenAI.OrgID)
 		}
@@ -117,7 +117,7 @@ func printProfileDetail(p config.Profile) {
 
 	if p.Gemini != nil {
 		fmt.Println("  " + ui.StyleServiceBadge.Render("Gemini"))
-		fmt.Println(ui.StyleMuted.Render("    API Key  ") + maskSecret(p.Gemini.APIKey))
+		fmt.Println(ui.StyleMuted.Render("    API Key  ") + ui.MaskSecret(p.Gemini.APIKey))
 		if p.Gemini.ProjectID != "" {
 			fmt.Println(ui.StyleMuted.Render("    Project  ") + p.Gemini.ProjectID)
 		}
@@ -133,7 +133,7 @@ func printProfileDetail(p config.Profile) {
 		if p.GitHub.Email != "" {
 			fmt.Println(ui.StyleMuted.Render("    Email     ") + p.GitHub.Email)
 		}
-		fmt.Println(ui.StyleMuted.Render("    Token     ") + maskSecret(p.GitHub.Token))
+		fmt.Println(ui.StyleMuted.Render("    Token     ") + ui.MaskSecret(p.GitHub.Token))
 		fmt.Println()
 	}
 
