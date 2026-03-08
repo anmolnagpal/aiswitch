@@ -7,7 +7,9 @@ import (
 
 	"github.com/anmolnagpal/aiswitch/internal/config"
 	"github.com/anmolnagpal/aiswitch/internal/providers/claude"
+	"github.com/anmolnagpal/aiswitch/internal/providers/gemini"
 	"github.com/anmolnagpal/aiswitch/internal/providers/github"
+	"github.com/anmolnagpal/aiswitch/internal/providers/openai"
 	"github.com/anmolnagpal/aiswitch/internal/ui"
 )
 
@@ -54,11 +56,25 @@ var currentCmd = &cobra.Command{
 			fmt.Println("  " + ui.StyleServiceBadge.Render("Claude") + "  " + ui.StyleMuted.Render("not detected"))
 		}
 
+		openAIKey := openai.Detect()
+		if openAIKey != "" {
+			fmt.Println("  " + ui.StyleServiceBadge.Render("OpenAI") + "  " + maskSecret(openAIKey))
+		} else {
+			fmt.Println("  " + ui.StyleServiceBadge.Render("OpenAI") + "  " + ui.StyleMuted.Render("not detected"))
+		}
+
+		geminiKey := gemini.Detect()
+		if geminiKey != "" {
+			fmt.Println("  " + ui.StyleServiceBadge.Render("Gemini") + "  " + maskSecret(geminiKey))
+		} else {
+			fmt.Println("  " + ui.StyleServiceBadge.Render("Gemini") + "  " + ui.StyleMuted.Render("not detected"))
+		}
+
 		ghUser := github.Detect()
 		if ghUser != "" {
 			fmt.Println("  " + ui.StyleServiceBadge.Render("GitHub") + "  @" + ghUser)
 		} else {
-			fmt.Println("  " + ui.StyleServiceBadge.Render("GitHub") + "  " + ui.StyleMuted.Render("not detected (gh CLI not found or not logged in)"))
+			fmt.Println("  " + ui.StyleServiceBadge.Render("GitHub") + "  " + ui.StyleMuted.Render("not detected"))
 		}
 
 		fmt.Println()
@@ -76,14 +92,37 @@ func printProfileDetail(p config.Profile) {
 		fmt.Println()
 	}
 
+	if p.OpenAI != nil {
+		fmt.Println("  " + ui.StyleServiceBadge.Render("OpenAI"))
+		fmt.Println(ui.StyleMuted.Render("    API Key  ") + maskSecret(p.OpenAI.APIKey))
+		if p.OpenAI.OrgID != "" {
+			fmt.Println(ui.StyleMuted.Render("    Org ID   ") + p.OpenAI.OrgID)
+		}
+		if p.OpenAI.DefaultModel != "" {
+			fmt.Println(ui.StyleMuted.Render("    Model    ") + p.OpenAI.DefaultModel)
+		}
+		fmt.Println()
+	}
+
+	if p.Gemini != nil {
+		fmt.Println("  " + ui.StyleServiceBadge.Render("Gemini"))
+		fmt.Println(ui.StyleMuted.Render("    API Key  ") + maskSecret(p.Gemini.APIKey))
+		if p.Gemini.ProjectID != "" {
+			fmt.Println(ui.StyleMuted.Render("    Project  ") + p.Gemini.ProjectID)
+		}
+		if p.Gemini.DefaultModel != "" {
+			fmt.Println(ui.StyleMuted.Render("    Model    ") + p.Gemini.DefaultModel)
+		}
+		fmt.Println()
+	}
+
 	if p.GitHub != nil {
 		fmt.Println("  " + ui.StyleServiceBadge.Render("GitHub"))
 		fmt.Println(ui.StyleMuted.Render("    Username  ") + "@" + p.GitHub.Username)
 		if p.GitHub.Email != "" {
 			fmt.Println(ui.StyleMuted.Render("    Email     ") + p.GitHub.Email)
 		}
-		tokenLine := maskSecret(p.GitHub.Token)
-		fmt.Println(ui.StyleMuted.Render("    Token     ") + tokenLine)
+		fmt.Println(ui.StyleMuted.Render("    Token     ") + maskSecret(p.GitHub.Token))
 		fmt.Println()
 	}
 

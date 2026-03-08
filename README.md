@@ -2,7 +2,7 @@
 
 <h1>⚡ aiswitch</h1>
 
-<p><strong>Switch between Claude and GitHub Copilot accounts in one command.</strong><br/>
+<p><strong>Switch between Claude, OpenAI, Gemini, and GitHub Copilot accounts in one command.</strong><br/>
 Like <a href="https://github.com/warrensbox/terraform-switcher">tfswitch</a>, but for AI.</p>
 
 [![CI](https://github.com/anmolnagpal/aiswitch/actions/workflows/ci.yml/badge.svg)](https://github.com/anmolnagpal/aiswitch/actions/workflows/ci.yml)
@@ -21,9 +21,9 @@ $ aiswitch
 
   Switch AI Profile
 
-  ▶ ● work          Claude + GitHub   (active)
-    ○ personal      Claude + GitHub
-    ○ client-x      Claude only
+  ▶ ● work          Claude + OpenAI + GitHub    (active)
+    ○ personal      Claude + Gemini + GitHub
+    ○ client-x      OpenAI only
     ○ open-source   GitHub only
 
   ↑/↓ navigate  •  enter select  •  / filter  •  q quit
@@ -33,9 +33,9 @@ $ aiswitch
 
 ## Why aiswitch?
 
-Most developers juggle **multiple AI accounts** — a work Anthropic account on a premium plan, a personal Claude account, and two or three GitHub accounts each with a different Copilot subscription. Switching between them today means:
+Most developers juggle **multiple AI accounts** — a work Anthropic account on a premium plan, a personal Claude account, an OpenAI key for GPT-4o, a Gemini key for AI Studio experiments, and two or three GitHub accounts each with a different Copilot subscription. Switching between them today means:
 
-- Manually editing `~/.bashrc` to change `ANTHROPIC_API_KEY`
+- Manually editing `~/.bashrc` to swap `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `GEMINI_API_KEY` …
 - Running `gh auth switch` and hoping VS Code picks it up
 - Forgetting which account is active mid-session and burning API quota on the wrong key
 
@@ -50,7 +50,9 @@ Most developers juggle **multiple AI accounts** — a work Anthropic account on 
 - **Per-project pinning** — commit a `.aiswitch` file; the profile switches automatically on `cd`
 - **Auto-detect cd hook** — works with zsh, bash, fish, and PowerShell
 - **Claude** — sets `ANTHROPIC_API_KEY`, `ANTHROPIC_MODEL`, writes `~/.anthropic/api_key`, patches Claude Code credentials
-- **GitHub Copilot** — updates `~/.config/gh/hosts.yml` (the active `gh` CLI user), sets `GITHUB_TOKEN` / `GH_TOKEN`, optionally updates `git config user.email`
+- **OpenAI** — sets `OPENAI_API_KEY`, `OPENAI_ORG_ID`, `OPENAI_MODEL`, writes `~/.config/openai/api_key`
+- **Gemini** — sets `GEMINI_API_KEY`, `GOOGLE_API_KEY`, `GEMINI_MODEL`, `GOOGLE_CLOUD_PROJECT`, writes `~/.config/gemini/api_key`
+- **GitHub Copilot** — updates `~/.config/gh/hosts.yml`, sets `GITHUB_TOKEN` / `GH_TOKEN`, optionally updates `git config user.email`
 - **Cross-platform** — macOS (Intel + Apple Silicon), Linux (amd64 + arm64), Windows (amd64)
 - **Zero runtime deps** — single self-contained binary, ~5 MB
 
@@ -159,10 +161,16 @@ This writes a `.aiswitch` file. **It contains no secrets — safe to commit.**
 profile: work
 
 claude:
-  model: claude-opus-4-5     # optional: pin a model for this project
+  model: claude-opus-4-5       # optional: pin a model for this project
+
+openai:
+  model: gpt-4o                # optional: pin an OpenAI model
+
+gemini:
+  model: gemini-2.0-flash      # optional: pin a Gemini model
 
 github:
-  email: me@company.com      # optional: override git commit email
+  email: me@company.com        # optional: override git commit email
 ```
 
 Minimal plain-text form also works:

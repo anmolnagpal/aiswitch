@@ -9,7 +9,9 @@ import (
 
 	"github.com/anmolnagpal/aiswitch/internal/config"
 	"github.com/anmolnagpal/aiswitch/internal/providers/claude"
+	"github.com/anmolnagpal/aiswitch/internal/providers/gemini"
 	"github.com/anmolnagpal/aiswitch/internal/providers/github"
+	"github.com/anmolnagpal/aiswitch/internal/providers/openai"
 	"github.com/anmolnagpal/aiswitch/internal/ui"
 )
 
@@ -87,6 +89,16 @@ func applyProfile(cfg *config.Config, name string) error {
 	if profile.Claude != nil {
 		if err := claude.Apply(*profile.Claude, paths); err != nil {
 			return fmt.Errorf("applying Claude config: %w", err)
+		}
+	}
+	if profile.OpenAI != nil {
+		if err := openai.Apply(*profile.OpenAI, paths); err != nil {
+			return fmt.Errorf("applying OpenAI config: %w", err)
+		}
+	}
+	if profile.Gemini != nil {
+		if err := gemini.Apply(*profile.Gemini, paths); err != nil {
+			return fmt.Errorf("applying Gemini config: %w", err)
 		}
 	}
 	if profile.GitHub != nil {

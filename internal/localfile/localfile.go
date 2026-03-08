@@ -10,10 +10,16 @@
 //	profile: work
 //
 //	claude:
-//	  model: claude-opus-4-5   # optional — overrides profile default
+//	  model: claude-opus-4-5        # optional — overrides profile default
+//
+//	openai:
+//	  model: gpt-4o                 # optional — overrides profile default
+//
+//	gemini:
+//	  model: gemini-2.0-flash       # optional — overrides profile default
 //
 //	github:
-//	  email: me@company.com    # optional — overrides git commit email
+//	  email: me@company.com         # optional — overrides git commit email
 //
 // Plain-text shorthand (just a profile name) is also supported:
 //
@@ -37,15 +43,25 @@ type LocalConfig struct {
 	// Profile is the global aiswitch profile to activate in this directory.
 	Profile string `yaml:"profile"`
 
-	// Claude holds optional per-project overrides that layer on top of the profile.
+	// Per-provider overrides — all fields are optional.
 	Claude *ClaudeOverride `yaml:"claude,omitempty"`
-
-	// GitHub holds optional per-project GitHub overrides.
+	OpenAI *OpenAIOverride `yaml:"openai,omitempty"`
+	Gemini *GeminiOverride `yaml:"gemini,omitempty"`
 	GitHub *GitHubOverride `yaml:"github,omitempty"`
 }
 
-// ClaudeOverride lets a project pin a specific model without creating a full profile.
+// ClaudeOverride lets a project pin a specific Claude model.
 type ClaudeOverride struct {
+	Model string `yaml:"model,omitempty"`
+}
+
+// OpenAIOverride lets a project pin a specific OpenAI model.
+type OpenAIOverride struct {
+	Model string `yaml:"model,omitempty"`
+}
+
+// GeminiOverride lets a project pin a specific Gemini model.
+type GeminiOverride struct {
 	Model string `yaml:"model,omitempty"`
 }
 

@@ -24,10 +24,18 @@ var addCmd = &cobra.Command{
 		var (
 			profileName string
 			description string
-			services    []string // "claude" | "github"
+			services    []string // "claude" | "openai" | "gemini" | "github"
 
 			claudeAPIKey string
 			claudeModel  string
+
+			openAIAPIKey string
+			openAIOrgID  string
+			openAIModel  string
+
+			geminiAPIKey  string
+			geminiProject string
+			geminiModel   string
 
 			ghToken    string
 			ghUsername string
@@ -38,7 +46,33 @@ var addCmd = &cobra.Command{
 			profileName = args[0]
 		}
 
-		// ── Step 1: name & description ────────────────────────────────────────
+		// Pre-fill from existing profile when updating.
+		if profileName != "" {
+			if existing, ok := cfg.Profiles[profileName]; ok {
+				description = existing.Description
+				if existing.Claude != nil {
+					claudeAPIKey = existing.Claude.APIKey
+					claudeModel = existing.Claude.DefaultModel
+				}
+				if existing.OpenAI != nil {
+					openAIAPIKey = existing.OpenAI.APIKey
+					openAIOrgID = existing.OpenAI.OrgID
+					openAIModel = existing.OpenAI.DefaultModel
+				}
+				if existing.Gemini != nil {
+					geminiAPIKey = existing.Gemini.APIKey
+					geminiProject = existing.Gemini.ProjectID
+					geminiModel = existing.Gemini.DefaultModel
+				}
+				if existing.GitHub != nil {
+					ghToken = existing.GitHub.Token
+					ghUsername = existing.GitHub.Username
+					ghEmail = existing.GitHub.Email
+				}
+			}
+		}
+
+		// ── Step 1: name, description, service selection ──────────────────────
 		nameForm := huh.NewForm(
 			huh.NewGroup(
 				huh.NewInput().
@@ -47,8 +81,7 @@ var addCmd = &cobra.Command{
 					Placeholder("work").
 					Value(&profileName).
 					Validate(func(s string) error {
-						s = strings.TrimSpace(s)
-						if s == "" {
+						if strings.TrimSpace(s) == "" {
 							return fmt.Errorf("name cannot be empty")
 						}
 						return nil
@@ -61,48 +94,44 @@ var addCmd = &cobra.Command{
 					Value(&description),
 
 				huh.NewMultiSelect[string]().
-					Title("Which services to configure?").
+					Title("Which AI providers to configure?").
 					Options(
-						huh.NewOption("Claude / Anthropic", "claude"),
-						huh.NewOption("GitHub / Copilot", "github"),
+						huh.NewOption("Claude  (Anthropic)", "claude"),
+						huh.NewOption("OpenAI  (GPT-4o, o1, o3…)", "openai"),
+						huh.NewOption("Gemini  (Google AI / Vertex AI)", "gemini"),
+						huh.NewOption("GitHub  (Copilot + gh CLI)", "github"),
 					).
 					Value(&services).
 					Validate(func(s []string) error {
 						if len(s) == 0 {
-							return fmt.Errorf("select at least one service")
+							return fmt.Errorf("select at least one provider")
 						}
 						return nil
 					}),
 			),
 		)
-
 		if err := nameForm.Run(); err != nil {
 			return err
 		}
 
 		profileName = strings.TrimSpace(profileName)
 		wantClaude := contains(services, "claude")
+		wantOpenAI := contains(services, "openai")
+		wantGemini := contains(services, "gemini")
 		wantGitHub := contains(services, "github")
 
-		// ── Step 2: Claude credentials ────────────────────────────────────────
+		// ── Step 2: Claude ────────────────────────────────────────────────────
 		if wantClaude {
-			// Pre-fill from existing profile if updating.
-			if existing, ok := cfg.Profiles[profileName]; ok && existing.Claude != nil {
-				claudeAPIKey = existing.Claude.APIKey
-				claudeModel = existing.Claude.DefaultModel
-			}
-
-			claudeForm := huh.NewForm(
+			form := huh.NewForm(
 				huh.NewGroup(
 					huh.NewInput().
 						Title("Anthropic API Key").
-						Description("Starts with sk-ant-  —  get it from console.anthropic.com").
+						Description("console.anthropic.com → API Keys").
 						Placeholder("sk-ant-api03-...").
 						EchoMode(huh.EchoModePassword).
 						Value(&claudeAPIKey).
 						Validate(func(s string) error {
-							s = strings.TrimSpace(s)
-							if s == "" {
+							if strings.TrimSpace(s) == "" {
 								return fmt.Errorf("API key cannot be empty")
 							}
 							return nil
@@ -115,30 +144,93 @@ var addCmd = &cobra.Command{
 						Value(&claudeModel),
 				),
 			)
-			if err := claudeForm.Run(); err != nil {
+			if err := form.Run(); err != nil {
 				return err
 			}
 		}
 
-		// ── Step 3: GitHub credentials ────────────────────────────────────────
-		if wantGitHub {
-			if existing, ok := cfg.Profiles[profileName]; ok && existing.GitHub != nil {
-				ghToken = existing.GitHub.Token
-				ghUsername = existing.GitHub.Username
-				ghEmail = existing.GitHub.Email
-			}
+		// ── Step 3: OpenAI ────────────────────────────────────────────────────
+		if wantOpenAI {
+			form := huh.NewForm(
+				huh.NewGroup(
+					huh.NewInput().
+						Title("OpenAI API Key").
+						Description("platform.openai.com → API keys").
+						Placeholder("sk-proj-...").
+						EchoMode(huh.EchoModePassword).
+						Value(&openAIAPIKey).
+						Validate(func(s string) error {
+							if strings.TrimSpace(s) == "" {
+								return fmt.Errorf("API key cannot be empty")
+							}
+							return nil
+						}),
 
-			ghForm := huh.NewForm(
+					huh.NewInput().
+						Title("Organisation ID").
+						Description("Optional — platform.openai.com → Settings → Organisation ID").
+						Placeholder("org-...").
+						Value(&openAIOrgID),
+
+					huh.NewInput().
+						Title("Default model").
+						Description("Optional — e.g. gpt-4o, gpt-4o-mini, o3").
+						Placeholder("gpt-4o").
+						Value(&openAIModel),
+				),
+			)
+			if err := form.Run(); err != nil {
+				return err
+			}
+		}
+
+		// ── Step 4: Gemini ────────────────────────────────────────────────────
+		if wantGemini {
+			form := huh.NewForm(
+				huh.NewGroup(
+					huh.NewInput().
+						Title("Gemini API Key").
+						Description("aistudio.google.com → Get API key  (leave blank for Vertex AI ADC)").
+						Placeholder("AIza...").
+						EchoMode(huh.EchoModePassword).
+						Value(&geminiAPIKey).
+						Validate(func(s string) error {
+							if strings.TrimSpace(s) == "" {
+								return fmt.Errorf("API key cannot be empty")
+							}
+							return nil
+						}),
+
+					huh.NewInput().
+						Title("Default model").
+						Description("Optional — e.g. gemini-2.0-flash, gemini-1.5-pro").
+						Placeholder("gemini-2.0-flash").
+						Value(&geminiModel),
+
+					huh.NewInput().
+						Title("Google Cloud Project ID").
+						Description("Optional — only needed for Vertex AI").
+						Placeholder("my-project-123").
+						Value(&geminiProject),
+				),
+			)
+			if err := form.Run(); err != nil {
+				return err
+			}
+		}
+
+		// ── Step 5: GitHub ────────────────────────────────────────────────────
+		if wantGitHub {
+			form := huh.NewForm(
 				huh.NewGroup(
 					huh.NewInput().
 						Title("GitHub Personal Access Token").
-						Description("Create at github.com/settings/tokens — needs repo, user, copilot scopes").
+						Description("github.com/settings/tokens — needs repo, read:user, copilot scopes").
 						Placeholder("ghp_...").
 						EchoMode(huh.EchoModePassword).
 						Value(&ghToken).
 						Validate(func(s string) error {
-							s = strings.TrimSpace(s)
-							if s == "" {
+							if strings.TrimSpace(s) == "" {
 								return fmt.Errorf("token cannot be empty")
 							}
 							return nil
@@ -162,12 +254,12 @@ var addCmd = &cobra.Command{
 						Value(&ghEmail),
 				),
 			)
-			if err := ghForm.Run(); err != nil {
+			if err := form.Run(); err != nil {
 				return err
 			}
 		}
 
-		// ── Build & save profile ───────────────────────────────────────────────
+		// ── Build & save ──────────────────────────────────────────────────────
 		profile := config.Profile{
 			Description: strings.TrimSpace(description),
 		}
@@ -175,6 +267,20 @@ var addCmd = &cobra.Command{
 			profile.Claude = &config.ClaudeConfig{
 				APIKey:       strings.TrimSpace(claudeAPIKey),
 				DefaultModel: strings.TrimSpace(claudeModel),
+			}
+		}
+		if wantOpenAI {
+			profile.OpenAI = &config.OpenAIConfig{
+				APIKey:       strings.TrimSpace(openAIAPIKey),
+				OrgID:        strings.TrimSpace(openAIOrgID),
+				DefaultModel: strings.TrimSpace(openAIModel),
+			}
+		}
+		if wantGemini {
+			profile.Gemini = &config.GeminiConfig{
+				APIKey:       strings.TrimSpace(geminiAPIKey),
+				ProjectID:    strings.TrimSpace(geminiProject),
+				DefaultModel: strings.TrimSpace(geminiModel),
 			}
 		}
 		if wantGitHub {
